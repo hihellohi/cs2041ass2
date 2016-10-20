@@ -19,26 +19,26 @@ z{{profile['zid']}}
 		<ul class="nav nav-sidebar">
 			{% for mate in mates %}
 			<li>
-			<div class="row">
-				<div class="col-md-2 col-md-offset-1">
+				<a href="z{{mate['zid']}}">
+					<div class="row">
+						<div class="col-md-2 col-md-offset-1">
 
-					{% if mate['dp'] %}
-					<img src="{{mate['dp']}}" class="img-responsive img-circle">
-					{%endif%} <!--ABSOLUTE-->
+							{% if mate['dp'] %}
+							<img src="{{mate['dp']}}" class="img-responsive img-circle">
+							{%endif%} <!--ABSOLUTE-->
 
-				</div>
-				<div class="col-md-9" "col-md-offset-1">
+						</div>
+						<div class="col-md-9" "col-md-offset-1">
 
-					<a href="z{{mate['zid']}}">
-						{% if mate['name'] %}
-						{{mate['name']}}
-						{% else %}
-						z{{mate['zid']}}
-						{% endif %}
-					</a>
+							{% if mate['name'] %}
+							{{mate['name']}}
+							{% else %}
+							z{{mate['zid']}}
+							{% endif %}
 
-				</div>
-			</div>
+						</div>
+					</div>
+				</a>
 			</li>
 			{% endfor %}
 		</ul>
