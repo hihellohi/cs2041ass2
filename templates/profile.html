@@ -1,7 +1,74 @@
 {% extends "main.html" %}
+
 {% block title %}
+{% if name %}
 {{name}}
+{% else %}
+z{{profile['zid']}}
+{% endif %}
 {% endblock %}
+
+{% block stylesheets %}
+	<link href="/static/css/dashboard.css" rel="stylesheet"> <!--ABSOLUTE-->
+{% endblock %}
+
 {% block body %}
-z{{zid}}
+<div class="row">
+	<div class="col-md-2 sidebar">
+		<h3>Mates</h3>
+		<ul class="nav nav-sidebar">
+			{% for mate in mates %}
+			<li>
+			<div class="row">
+				<div class="col-md-2 col-md-offset-1">
+
+					{% if mate['dp'] %}
+					<img src="{{mate['dp']}}" class="img-responsive img-circle">
+					{%endif%} <!--ABSOLUTE-->
+
+				</div>
+				<div class="col-md-9" "col-md-offset-1">
+
+					<a href="z{{mate['zid']}}">
+						{% if mate['name'] %}
+						{{mate['name']}}
+						{% else %}
+						z{{mate['zid']}}
+						{% endif %}
+					</a>
+
+				</div>
+			</div>
+			</li>
+			{% endfor %}
+		</ul>
+	</div>
+	<div class="col-md-10 col-md-offset-2 main">
+		<h1>{% if profile['name'] %}{{profile['name']}} {% endif %}(z{{profile['zid']}})</h1>
+		<div class="row">
+
+			<div class="col-md-4">
+				{% if profile['dp'] %}<img src="{{profile['dp']}}" class="img-responsive img-rounded">{%endif%} <!--ABSOLUTE-->
+			</div>
+
+			<div class="col-md-6">
+				<h2>About</h2>
+				<p>
+				{%if profile['birthday']%}
+				<b>Birthday:</b> {{profile['birthday']}}
+				<br>
+				{%endif%}
+				{%if profile['program']%}
+				<b>Program:</b> {{profile['program']}}
+				<br>
+				{%endif%}
+				{%if profile['suburb']%}
+				<b>Home Suburb:</b> {{profile['suburb']}}
+				<br>
+				{%endif%}
+				</p>
+			</div>
+		</div>
+	</div>
+</div>
 {% endblock %}

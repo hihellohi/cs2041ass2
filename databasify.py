@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.5
 
-import glob, os, sys, sqlite3;#, re;
+import glob, os, sys, sqlite3, shutil;#, re;
 
 if(len(sys.argv) != 3):
 	print("usage: %s dbname directory" % sys.argv[0]); 
@@ -36,6 +36,11 @@ cursor.execute('''CREATE TABLE courses(
 		user INTEGER,
 		course TEXT)''');
 
+if os.path.exists('static/pics'):
+	shutil.rmtree('static/pics');
+
+os.makedirs('static/pics');
+
 for path in glob.glob(os.path.join(sys.argv[2], "*")):
 	person = path[-7:];
 
@@ -48,6 +53,8 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 	dp = os.path.join(path, "profile.jpg");
 	if not os.path.exists(dp):
 		dp = "";
+	else:
+		dp = '/' + shutil.copyfile(dp, os.path.join('static/pics', person + '.jpg'));
 
 	cursor.execute('''INSERT INTO users 
 	(zid, name, program, latitude, longitude, suburb, email, password, birthday, dp) VALUES 

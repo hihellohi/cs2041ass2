@@ -24,22 +24,21 @@ def query_db(query, args=(), one=False):
 @app.teardown_appcontext
 def close_connection(exception):
 	db = getattr(g, '_database', None);
-	if db is None:
+	if db:
 		db.close();
 #endsrc
 
 @app.route('/')
 def hello_world():
-	return "hello world";
 	return render_template("main.html");
 
 @app.route('/z<stuid>')
 def profile_page(stuid):
 	profile = query_db("SELECT * FROM users WHERE zid = ?", [stuid], one=True);
+	mates = query_db("""SELECT users.zid, users.dp, users.name FROM users JOIN mates 
+			ON users.zid = mates.mate2 WHERE mates.mate1= ?""", [stuid]);
 	if not profile is None:
-		return render_template("profile.html", 
-				name=profile['name'],
-				zid=stuid);
+		return render_template("profile.html", profile=profile, mates=mates);
 	else:
 		return stuid
 
