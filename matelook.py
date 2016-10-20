@@ -10,7 +10,9 @@ database = "dataset.db";
 def get_db():
 	db = getattr(g, '_database', None);
 	if db is None:
-		db = g._database = sqlite3.connect(database);
+		db = sqlite3.connect(database);
+		db.row_factory = sqlite3.Row;
+		g._database = db;
 	return db;
 
 def query_db(query, args=(), one=False):
@@ -28,6 +30,7 @@ def close_connection(exception):
 
 @app.route('/')
 def hello_world():
+	return "hello world";
 	return render_template("main.html");
 
 @app.route('/z<stuid>')
