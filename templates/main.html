@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>matelook</title>
+	<title>{% block title %}matelook{% endblock %}</title>
 <link href="static/matelook.css" rel="stylesheet">
 </head>
 <body>
 <div class="matelook_heading">
 matelook
 </div>
-{{body}}
+{% block body %}{% endblock %}
 </body>
 </html>

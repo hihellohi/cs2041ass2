@@ -51,7 +51,7 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 
 	cursor.execute('''INSERT INTO users 
 	(zid, name, program, latitude, longitude, suburb, email, password, birthday, dp) VALUES 
-	(%s, '%s', '%s', %s, %s, '%s', '%s', '%s', %s, '%s')''' % 
+	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''' , 
 		(person,
 		fields.get("full_name", ""),
 		fields.get("program", ""),
@@ -68,13 +68,13 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 		tmp = fields["mates"].split(",");
 		for mate in tmp:
 			mate = mate.rstrip('] \n')[-7:];
-			cursor.execute('INSERT INTO mates (mate1, mate2) VALUES (%s, %s)' % (person, mate));
+			cursor.execute('INSERT INTO mates (mate1, mate2) VALUES (?, ?)', (person, mate));
 
 	if "courses" in fields:
 		tmp = fields["courses"].split(",");
 		for course in tmp:
 			course = course.rstrip('] \n').lstrip('[ ');
-			cursor.execute('INSERT INTO courses (user, course) VALUES (%s, \'%s\')' % (person, course));
+			cursor.execute('INSERT INTO courses (user, course) VALUES (?, ?)' , (person, course));
 
 db.commit();
 db.close();
