@@ -1,1 +1,3 @@
 05/10/16	18:00	18:15	put the first real entry in diary.txt (delete this line!)
+20/10/16	12:00	13:00	moved to flask
+20/10/16	13:00	17:00	sqlite
