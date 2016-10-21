@@ -36,6 +36,33 @@ cursor.execute('''CREATE TABLE courses(
 		user INTEGER,
 		course TEXT)''');
 
+cursor.execute('''CREATE TABLE posts(
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		longitude FLOAT,
+		latitude FLOAT,
+		zid INTEGER,
+		parent INTEGER,
+		message TEXT,
+		date DATE,
+		time TIME)''');
+
+cursor.execute('''CREATE TABLE comments(
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		zid INTEGER,
+		parent INTEGER,
+		message TEXT,
+		date DATE,
+		time TIME)''');
+
+cursor.execute('''CREATE TABLE replies(
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		zid INTEGER,
+		parent INTEGER,
+		message TEXT,
+		date DATE,
+		time TIME)''');
+
+
 if os.path.exists('static/pics'):
 	shutil.rmtree('static/pics');
 
@@ -54,7 +81,7 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 	if not os.path.exists(dp):
 		dp = "";
 	else:
-		dp = '/' + shutil.copyfile(dp, os.path.join('static/pics', person + '.jpg'));
+		dp = '/' + shutil.copyfile(dp, os.path.join('static', 'pics', person + '.jpg'));
 
 	cursor.execute('''INSERT INTO users 
 	(zid, name, program, latitude, longitude, suburb, email, password, birthday, dp) VALUES 
@@ -82,6 +109,61 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 		for course in tmp:
 			course = course.rstrip('] \n').lstrip('[ ');
 			cursor.execute('INSERT INTO courses (user, course) VALUES (?, ?)' , (person, course));
+
+	if os.path.exists(os.path.join(path, 'posts')):
+		for post in glob.glob(os.path.join(path, 'posts', '*')):
+
+			fields = {};
+			with open(os.path.join(post, 'post.txt')) as fin:
+				for line in fin:
+					tmp = line.split('=');
+					fields[tmp[0]] = '='.join(tmp[1:]);
+
+			date, time = fields['time'].split('T');
+			time = time.split('+')[0];
+
+			cursor.execute('''INSERT INTO posts
+			(longitude, latitude, zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?, ?, ?)''',
+			(fields.get("longitude", ""), fields.get("latitude", ""), 
+				fields["from"], person, fields["message"].replace('\\n','\n'), date, time));
+			
+			cur = cursor.execute('SELECT last_insert_rowid() FROM posts');
+			postid = cur.fetchall()[0][0];
+
+			if os.path.exists(os.path.join(post, 'comments')):
+				for comment in glob.glob(os.path.join(post, 'comments', '*')):
+
+					fields = {};
+					with open(os.path.join(comment, 'comment.txt')) as fin:
+						for line in fin:
+							tmp = line.split('=');
+							fields[tmp[0]] = '='.join(tmp[1:]);
+
+					date, time = fields['time'].split('T');
+					time = time.split('+')[0];
+
+					cursor.execute('''INSERT INTO comments
+					(zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)''',
+					(fields["from"], postid, fields["message"].replace('\\n','\n'), date, time));
+					
+					cur = cursor.execute('SELECT last_insert_rowid() FROM comments');
+					commentid = cur.fetchall()[0][0];
+
+					if os.path.exists(os.path.join(comment, 'replies')):
+						for reply in glob.glob(os.path.join(comment, 'replies', '*')):
+
+							fields = {};
+							with open(os.path.join(reply, 'reply.txt')) as fin:
+								for line in fin:
+									tmp = line.split('=');
+									fields[tmp[0]] = '='.join(tmp[1:]);
+
+							date, time = fields['time'].split('T');
+							time = time.split('+')[0];
+
+							cursor.execute('''INSERT INTO replies
+							(zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)''',
+							(fields["from"], commentid, fields.get("message", "").replace('\\n','\n'), date, time));
 
 db.commit();
 db.close();

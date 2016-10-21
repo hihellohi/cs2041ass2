@@ -32,15 +32,16 @@ def close_connection(exception):
 def hello_world():
 	return render_template("main.html");
 
-@app.route('/z<stuid>')
+@app.route('/z<int:stuid>')
 def profile_page(stuid):
 	profile = query_db("SELECT * FROM users WHERE zid = ?", [stuid], one=True);
 	mates = query_db("""SELECT users.zid, users.dp, users.name FROM users JOIN mates 
 			ON users.zid = mates.mate2 WHERE mates.mate1= ?""", [stuid]);
+	posts = query_db("SELECT zid, message, date, time FROM posts WHERE parent = ? ORDER BY date DESC, time DESC", [stuid]);
+
 	if not profile is None:
-		return render_template("profile.html", profile=profile, mates=mates);
-	else:
-		return stuid
+		return render_template("profile.html", profile=profile, mates=mates, posts=posts);
+	return render_template("main.html");
 
 @app.route('/static/<path:path>')
 def send_static_file(path):

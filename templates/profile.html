@@ -14,21 +14,21 @@ z{{profile['zid']}}
 
 {% block body %}
 <div class="row">
-	<div class="col-md-2 sidebar">
+	<div class="col-sm-3 col-md-2 sidebar">
 		<h3>Mates</h3>
 		<ul class="nav nav-sidebar">
 			{% for mate in mates %}
 			<li>
 				<a href="z{{mate['zid']}}">
 					<div class="row">
-						<div class="col-md-2 col-md-offset-1">
+						<div class="col-md-2 col-sm-3">
 
 							{% if mate['dp'] %}
 							<img src="{{mate['dp']}}" class="img-responsive img-circle">
 							{%endif%} <!--ABSOLUTE-->
 
 						</div>
-						<div class="col-md-9" "col-md-offset-1">
+						<div class="col-md-10 col-sm-9">
 
 							{% if mate['name'] %}
 							{{mate['name']}}
@@ -43,15 +43,15 @@ z{{profile['zid']}}
 			{% endfor %}
 		</ul>
 	</div>
-	<div class="col-md-10 col-md-offset-2 main">
+	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 		<h1>{% if profile['name'] %}{{profile['name']}} {% endif %}(z{{profile['zid']}})</h1>
 		<div class="row">
 
-			<div class="col-md-4">
+			<div class="col-sm-4 col-md-4">
 				{% if profile['dp'] %}<img src="{{profile['dp']}}" class="img-responsive img-rounded">{%endif%} <!--ABSOLUTE-->
 			</div>
 
-			<div class="col-md-6">
+			<div class="col-sm-6 col-md-6">
 				<h2>About</h2>
 				<p>
 				{%if profile['birthday']%}
@@ -69,6 +69,25 @@ z{{profile['zid']}}
 				</p>
 			</div>
 		</div>
+
+		<br>
+
+		{% for post in posts %}
+		<div class="panel panel-default">
+			<div class="panel-heading clearfix">
+				<h3 class="panel-title pull-left">{{post['zid']}}</h3>
+				<div class="pull-right">
+					{{post['date']}} {{post['time']}}
+				</div>
+			</div>
+			<div class="panel-body">
+				<p>
+				{{post['message']}}
+				</p>
+			</div>
+		</div>
+		{% endfor %}
 	</div>
 </div>
+
 {% endblock %}
