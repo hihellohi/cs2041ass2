@@ -30,9 +30,9 @@ def close_connection(exception):
 
 @app.route('/')
 def hello_world():
-	return render_template("main.html");
+	return render_template("main.html", level='.');
 
-@app.route('/z<int:stuid>')
+@app.route('/z<int:stuid>/')
 def profile_page(stuid):
 	profile = query_db("SELECT * FROM users WHERE zid = ?", [stuid], one=True);
 	mates = query_db("""SELECT users.zid, users.dp, users.name FROM users JOIN mates 
@@ -46,7 +46,7 @@ def profile_page(stuid):
 		return render_template("profile.html", level="..", profile=profile, mates=mates, posts=posts);
 	return render_template("main.html");
 
-@app.route('/search')
+@app.route('/search/')
 def search():
 	if 'search' in request.args:
 		results = query_db("SELECT zid, name, dp FROM users WHERE name LIKE ?", ['%' + request.args['terms'] + '%']);
