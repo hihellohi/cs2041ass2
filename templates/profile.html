@@ -15,7 +15,7 @@ z{{profile['zid']}}
 {%block navbar%}<nav class="navbar navbar-inverse navbar-fixed-top">{%endblock%}
 
 {% block body %}
-<div class="row container-fluid">
+<div class="row container">
 	<div class="col-sm-3 col-md-2 sidebar">
 		<h3>Mates</h3>
 		<ul class="nav nav-sidebar">
@@ -43,7 +43,7 @@ z{{profile['zid']}}
 			{% endfor %}
 		</ul>
 	</div>
-	<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+	<div class="col-sm-9 col-sm-offset-6 col-md-10 col-md-offset-5 main">
 		<h1>{% if profile['name'] %}{{profile['name']}} {% endif %}(z{{profile['zid']}})</h1>
 		<div class="row">
 
@@ -72,39 +72,7 @@ z{{profile['zid']}}
 
 		<br>
 
-		<ul class="media-list">
-			{% for post in posts %}
-			<li class="media">
-			<div class="media-left">
-				{% if post['dp'] %}
-				<a href="../z{{post['zid']}}/">
-					<img src="..{{post['dp']}}" class="media-object img-circle" style="width: 64px; height 64px">
-				</a>
-				{%endif%}
-			</div>
-			<div class="media-body">
-				<div class="media-heading clearfix">
-					<a class="pull-left" href="../z{{post['zid']}}/">
-						<h4>
-							{% if post['name'] %}
-							{{post['name']}}
-							{% else %}
-							z{{post['zid']}}
-							{% endif %}
-						</h4>
-					</a>
-					<div class="pull-right">
-						{{post['date']}} {{post['time']}}
-					</div>
-				</div>
-				<p>
-				{{post['message']}}
-				</p>
-			</div>
-			</li>
-			<hr>
-			{% endfor %}
-		</ul>
+		{% include "posts.html" %}
 	</div>
 </div>
 

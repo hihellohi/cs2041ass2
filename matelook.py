@@ -49,8 +49,15 @@ def profile_page(stuid):
 @app.route('/search/')
 def search():
 	if 'search' in request.args:
-		results = query_db("SELECT zid, name, dp FROM users WHERE name LIKE ?", ['%' + request.args['terms'] + '%']);
-		return render_template("suser.html", level="..", terms=request.args['terms'], users=results);
+		if request.args['criteria'] == 'users':
+			results = query_db("SELECT zid, name, dp FROM users WHERE name LIKE ?", ['%' + request.args['terms'] + '%']);
+			return render_template("suser.html", level="..", terms=request.args['terms'], users=results);
+		else:
+			results = query_db(
+			"""SELECT posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
+			FROM posts INNER JOIN users ON posts.zid = users.zid WHERE posts.message LIKE ? 
+			ORDER BY posts.date DESC, posts.time DESC""", ['%' + request.args['terms'] + '%']);
+			return render_template("spost.html", level="..", terms=request.args['terms'], posts=results);
 	else:
 		return render_template("srequest.html", level="..");
 
