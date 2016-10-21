@@ -1,0 +1,42 @@
+{% extends "main.html" %}
+
+{% block title %}
+Search
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <form method="GET" class="form-horizontal">
+		<div class="panel panel-primary">
+			<div class="panel-heading"><h1 class="panel-title">Search</h1></div>
+			<div class="panel-body">
+				<div class="form-group row">
+					<div class="col-sm-6 col-sm-offset-1">
+						<input type="text" {%block terms%}{%endblock%} name="terms" placeholder="Search Terms" class="form-control">
+					</div>
+					<div class="col-sm-4">
+						<select type="text" name="criteria" class="form-control">
+							{% block criteria %}
+							<option value="users" selected>Search Users</option>
+							<option value="posts" >Search Posts</option>
+							{% endblock %}
+						</select>
+					</div>
+				</div>
+				<div class="form-group row">
+					<div class="col-sm-6 col-sm-offset-1">
+						<button type="submit" name="search" class="btn btn-primary">Search</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+
+<div class="container">
+{% block results %}
+{% endblock %}
+</div>
+
+{% endblock %}
+

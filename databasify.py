@@ -75,7 +75,7 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 	with open(os.path.join(path, "user.txt")) as fin:
 		for line in fin:
 			tmp = line.split('=');
-			fields[tmp[0]] = '='.join(tmp[1:]);
+			fields[tmp[0]] = '='.join(tmp[1:]).rstrip();
 
 	dp = os.path.join(path, "profile.jpg");
 	if not os.path.exists(dp):
@@ -117,7 +117,7 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 			with open(os.path.join(post, 'post.txt')) as fin:
 				for line in fin:
 					tmp = line.split('=');
-					fields[tmp[0]] = '='.join(tmp[1:]);
+					fields[tmp[0]] = '='.join(tmp[1:]).rstrip();
 
 			date, time = fields['time'].split('T');
 			time = time.split('+')[0];
@@ -125,7 +125,7 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 			cursor.execute('''INSERT INTO posts
 			(longitude, latitude, zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?, ?, ?)''',
 			(fields.get("longitude", ""), fields.get("latitude", ""), 
-				fields["from"], person, fields["message"].replace('\\n','\n'), date, time));
+				fields["from"].rstrip()[-7:], person, fields["message"].replace('\\n','\n'), date, time));
 			
 			cur = cursor.execute('SELECT last_insert_rowid() FROM posts');
 			postid = cur.fetchall()[0][0];
@@ -137,14 +137,14 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 					with open(os.path.join(comment, 'comment.txt')) as fin:
 						for line in fin:
 							tmp = line.split('=');
-							fields[tmp[0]] = '='.join(tmp[1:]);
+							fields[tmp[0]] = '='.join(tmp[1:]).rstrip();
 
 					date, time = fields['time'].split('T');
 					time = time.split('+')[0];
 
 					cursor.execute('''INSERT INTO comments
 					(zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)''',
-					(fields["from"], postid, fields["message"].replace('\\n','\n'), date, time));
+					(fields["from"].rstrip()[-7:], postid, fields["message"].replace('\\n','\n'), date, time));
 					
 					cur = cursor.execute('SELECT last_insert_rowid() FROM comments');
 					commentid = cur.fetchall()[0][0];
@@ -156,14 +156,14 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 							with open(os.path.join(reply, 'reply.txt')) as fin:
 								for line in fin:
 									tmp = line.split('=');
-									fields[tmp[0]] = '='.join(tmp[1:]);
+									fields[tmp[0]] = '='.join(tmp[1:]).rstrip();
 
 							date, time = fields['time'].split('T');
 							time = time.split('+')[0];
 
 							cursor.execute('''INSERT INTO replies
 							(zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)''',
-							(fields["from"], commentid, fields.get("message", "").replace('\\n','\n'), date, time));
+							(fields["from"].rstrip()[-7:], commentid, fields.get("message", "").replace('\\n','\n'), date, time));
 
 db.commit();
 db.close();

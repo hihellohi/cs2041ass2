@@ -37,11 +37,22 @@ def profile_page(stuid):
 	profile = query_db("SELECT * FROM users WHERE zid = ?", [stuid], one=True);
 	mates = query_db("""SELECT users.zid, users.dp, users.name FROM users JOIN mates 
 			ON users.zid = mates.mate2 WHERE mates.mate1= ?""", [stuid]);
-	posts = query_db("SELECT zid, message, date, time FROM posts WHERE parent = ? ORDER BY date DESC, time DESC", [stuid]);
+	posts = query_db(
+	"""SELECT posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
+	FROM posts INNER JOIN users ON posts.zid = users.zid WHERE posts.parent = ? 
+	ORDER BY posts.date DESC, posts.time DESC""", [stuid]);
 
 	if not profile is None:
-		return render_template("profile.html", profile=profile, mates=mates, posts=posts);
+		return render_template("profile.html", level="..", profile=profile, mates=mates, posts=posts);
 	return render_template("main.html");
+
+@app.route('/search')
+def search():
+	if 'search' in request.args:
+		results = query_db("SELECT zid, name, dp FROM users WHERE name LIKE ?", ['%' + request.args['terms'] + '%']);
+		return render_template("suser.html", level="..", terms=request.args['terms'], users=results);
+	else:
+		return render_template("srequest.html", level="..");
 
 @app.route('/static/<path:path>')
 def send_static_file(path):

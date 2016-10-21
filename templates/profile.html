@@ -9,34 +9,34 @@ z{{profile['zid']}}
 {% endblock %}
 
 {% block stylesheets %}
-	<link href="/static/css/dashboard.css" rel="stylesheet"> <!--ABSOLUTE-->
+<link href="../static/css/dashboard.css" rel="stylesheet">
 {% endblock %}
 
+{%block navbar%}<nav class="navbar navbar-inverse navbar-fixed-top">{%endblock%}
+
 {% block body %}
-<div class="row">
+<div class="row container-fluid">
 	<div class="col-sm-3 col-md-2 sidebar">
 		<h3>Mates</h3>
 		<ul class="nav nav-sidebar">
 			{% for mate in mates %}
 			<li>
-				<a href="z{{mate['zid']}}">
-					<div class="row">
-						<div class="col-md-2 col-sm-3">
+				<a class="row" href="z{{mate['zid']}}">
+					<div class="col-md-2 col-sm-3">
 
-							{% if mate['dp'] %}
-							<img src="{{mate['dp']}}" class="img-responsive img-circle">
-							{%endif%} <!--ABSOLUTE-->
+						{% if mate['dp'] %}
+						<img src="..{{mate['dp']}}" class="img-responsive img-circle">
+						{%endif%} 
 
-						</div>
-						<div class="col-md-10 col-sm-9">
+					</div>
+					<div class="col-md-10 col-sm-9">
 
-							{% if mate['name'] %}
-							{{mate['name']}}
-							{% else %}
-							z{{mate['zid']}}
-							{% endif %}
+						{% if mate['name'] %}
+						{{mate['name']}}
+						{% else %}
+						z{{mate['zid']}}
+						{% endif %}
 
-						</div>
 					</div>
 				</a>
 			</li>
@@ -48,7 +48,7 @@ z{{profile['zid']}}
 		<div class="row">
 
 			<div class="col-sm-4 col-md-4">
-				{% if profile['dp'] %}<img src="{{profile['dp']}}" class="img-responsive img-rounded">{%endif%} <!--ABSOLUTE-->
+				{% if profile['dp'] %}<img src="..{{profile['dp']}}" class="img-responsive img-rounded">{%endif%}
 			</div>
 
 			<div class="col-sm-6 col-md-6">
@@ -72,21 +72,39 @@ z{{profile['zid']}}
 
 		<br>
 
-		{% for post in posts %}
-		<div class="panel panel-default">
-			<div class="panel-heading clearfix">
-				<h3 class="panel-title pull-left">{{post['zid']}}</h3>
-				<div class="pull-right">
-					{{post['date']}} {{post['time']}}
-				</div>
+		<ul class="media-list">
+			{% for post in posts %}
+			<li class="media">
+			<div class="media-left">
+				{% if post['dp'] %}
+				<a href="z{{post['zid']}}">
+					<img src="..{{post['dp']}}" class="media-object img-circle" style="width: 64px; height 64px">
+				</a>
+				{%endif%}
 			</div>
-			<div class="panel-body">
+			<div class="media-body">
+				<div class="media-heading clearfix">
+					<a class="pull-left" href="z{{post['zid']}}">
+						<h4>
+							{% if post['name'] %}
+							{{post['name']}}
+							{% else %}
+							z{{post['zid']}}
+							{% endif %}
+						</h4>
+					</a>
+					<div class="pull-right">
+						{{post['date']}} {{post['time']}}
+					</div>
+				</div>
 				<p>
 				{{post['message']}}
 				</p>
 			</div>
-		</div>
-		{% endfor %}
+			</li>
+			<hr>
+			{% endfor %}
+		</ul>
 	</div>
 </div>
 
