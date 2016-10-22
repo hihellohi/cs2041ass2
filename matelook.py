@@ -6,7 +6,7 @@ from flask import Flask, session, redirect, render_template, request, g;
 import datetime;
 
 app = Flask(__name__);
-app.secret_key = os.urandom(420);
+app.secret_key = "thisistext";
 
 database = "dataset.db";
 
@@ -64,7 +64,7 @@ def root():
 @app.route('/login/', methods=['GET', 'POST'])
 def login():
 	if 'login' in session:
-		return redirect("..");
+		return redirect(".");
 	if request.method == 'GET':
 		return get_template("login.html", level='..');
 	else:
@@ -72,14 +72,14 @@ def login():
 		password = query_db("SELECT password FROM users WHERE zid = ?", [num], one=True);
 		if password and password['password'] == request.form['password']:
 			session['login'] = num;
-			return redirect("../newsfeed/");
+			return redirect("newsfeed/");
 		else:
 			return get_template("login.html", level='..', zid=request.form['zid']);
 
 @app.route('/logoff/')
 def logoff():
 	session.pop('login', None);
-	return redirect('..');
+	return redirect('.');
 
 @app.route('/z<int:stuid>/')
 def profile_page(stuid):
@@ -95,12 +95,12 @@ def profile_page(stuid):
 
 	if not profile is None:
 		return get_template("profile.html", level="..", profile=profile, mates=mates, posts=posts);
-	return redirect("..");
+	return redirect(".");
 
 @app.route('/newsfeed/', methods=['GET', 'POST'])
 def home():
 	if not 'login' in session:
-		return redirect('/login/');
+		return redirect('login/');
 	else:
 		if request.method == 'POST':
 			c = get_db().cursor();
