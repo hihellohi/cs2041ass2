@@ -1,0 +1,36 @@
+{% block blah %} {% endblock %} <!--TEMP-->
+
+<ul class="media-list">
+	{% for post in posts %}
+	<li class="media">
+	<div class="media-left">
+		{% if post['dp'] %}
+		<a href="../z{{post['zid']}}/">
+			<img src="..{{post['dp']}}" class="media-object img-circle" style="width: 64px; height 64px">
+		</a>
+		{%endif%}
+	</div>
+	<div class="media-body">
+		<div class="media-heading clearfix">
+			<a class="pull-left" href="../z{{post['zid']}}/">
+				<h4>
+					{% if post['name'] %}
+					{{post['name']}}
+					{% else %}
+					z{{post['zid']}}
+					{% endif %}
+				</h4>
+			</a>
+			<div class="pull-right">
+				{{post['date']}} {{post['time']}}
+			</div>
+		</div>
+		<p>
+		{{post['message']}}
+		</p>
+	</div>
+	</li>
+	<hr>
+	{% endfor %}
+</ul>
+

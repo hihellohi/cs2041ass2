@@ -1,0 +1,18 @@
+{% extends "srequest.html" %}
+
+{% block title %}
+Search Results
+{% endblock %}
+
+{% block terms %}
+value="{{terms}}"
+{% endblock %}
+
+{% block criteria %}
+<option value="users" >Search Users</option>
+<option value="posts" selected>Search Posts</option>
+{% endblock %}
+
+{% block results %}
+{% include "posts.html" %}
+{% endblock %}

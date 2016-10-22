@@ -21,27 +21,17 @@
 			<li><a href="{{level}}/search/">Search</a></li>
 		</ul>
 
-		{% if not loggedin %}
-		<!--<div class="form-group">
-			<input type="text" name="email" placeholder="Email" class="form-control">
-		</div>
-
-		<div class="form-group">
-			<input type="password" name="password" placeholder="Password" class="form-control">
-		</div>-->
 		<div class="navbar-right">
-			<a href="{{level}}/login/"><button class="btn btn-primary navbar-btn">Sign in</button></a>
-			<a href="{{level}}/signup/"><button class="btn btn-success navbar-btn">Sign up</button></a>
-		</div>
+		{% if not login %}
 
+			<a href="{{level}}/login/" class="btn btn-primary navbar-btn">Sign in</a>
+			<a href="{{level}}/signup/" class="btn btn-success navbar-btn">Sign up</a>
 		{% else %}
 
-		<form method="POST" action="{{level}}" class="navbar-form navbar-right">
-			<label>Logged in as {{loggedin}}</label>
-			<button type="submit" name="logoff" class="btn btn-primary">Log off</button>
-		</form>
-
+			<label class="navbar-text">Logged in as z{{login}}</label>
+			<a href="{{level}}/logoff/" class="btn btn-primary navbar-btn">Log off</a>
 		{% endif %}
+		</div>
 	</div>
 </nav>
 

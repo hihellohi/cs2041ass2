@@ -1,0 +1,30 @@
+{% extends "main.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block body %}
+<div class="container">
+	<div class="row">
+		<form method="POST" action="" class="col-sm-6 col-sm-offset-3">
+			<div class="panel panel-primary">
+				<div class="panel-heading"><h1 class="panel-title">Login</h1></div>
+				<div class="panel-body">
+					<div class="form-group">
+						<input type="text" name="zid" {%if zid%}value={{zid}}{%endif%} 
+						placeholder="zID" class="form-control" required>
+					</div>
+
+					<div class="form-group">
+						<input type="password" name="password" placeholder="Password" class="form-control" required>
+						{% if zid %}
+						<small class="form-text text-danger">Incorrect Username or password!</small>
+						{% endif %}
+					</div>
+					<button type="submit" class="btn btn-primary">Submit</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+{% endblock %}
+
