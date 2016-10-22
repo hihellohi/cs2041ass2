@@ -25,12 +25,84 @@
 				{{post['date']}} {{post['time']}}
 			</div>
 		</div>
+
 		<p>
 		{{post['message']}}
 		</p>
+
+		<hr>
+
+		{% if post['children'] %}{% for comment in post['children'] %}
+		<div class="media">
+			<div class="media-left">
+				{% if comment['dp'] %}
+				<a href="../z{{comment['zid']}}/">
+					<img src="..{{comment['dp']}}" class="media-object img-circle" style="width: 48px; height 48px">
+				</a>
+				{%endif%}
+			</div>
+			<div class="media-body">
+				<div class="media-heading clearfix">
+					<a class="pull-left" href="../z{{comment['zid']}}/">
+						<h5>
+							{% if comment['name'] %}
+							{{comment['name']}}
+							{% else %}
+							z{{comment['zid']}}
+							{% endif %}
+						</h5>
+					</a>
+					<div class="pull-right">
+						{{comment['date']}} {{comment['time']}}
+					</div>
+				</div>
+
+				<p>
+				{{comment['message']}}
+				</p>
+
+				<hr>
+
+				{% if comment['children'] %}{% for comment in comment['children'] %}
+					<div class="media">
+						<div class="media-left">
+							{% if comment['dp'] %}
+							<a href="../z{{comment['zid']}}/">
+								<img src="..{{comment['dp']}}" class="media-object img-circle" style="width: 32px; height 32px">
+							</a>
+							{%endif%}
+						</div>
+						<div class="media-body">
+							<div class="media-heading clearfix">
+								<a class="pull-left" href="../z{{comment['zid']}}/">
+									<h5>
+										{% if comment['name'] %}
+										{{comment['name']}}
+										{% else %}
+										z{{comment['zid']}}
+										{% endif %}
+									</h5>
+								</a>
+								<div class="pull-right">
+									{{comment['date']}} {{comment['time']}}
+								</div>
+							</div>
+
+							<p>
+							{{comment['message']}}
+							</p>
+
+							<hr>
+						</div>
+					</div>
+
+				{% endfor %}{%endif%}
+				
+			</div>
+		</div>
+		{% endfor %}{% endif %}
 	</div>
 	</li>
-	<hr>
 	{% endfor %}
 </ul>
 

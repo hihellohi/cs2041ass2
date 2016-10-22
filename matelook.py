@@ -9,11 +9,15 @@ app.secret_key = os.urandom(420);
 database = "dataset.db";
 
 #src: http://flask.pocoo.org/docs/0.11/patterns/sqlite3/
+def make_dicts(cursor, row):
+    return dict((cursor.description[idx][0], value)
+                for idx, value in enumerate(row))
+
 def get_db():
 	db = getattr(g, '_database', None);
 	if db is None:
 		db = sqlite3.connect(database);
-		db.row_factory = sqlite3.Row;
+		db.row_factory = make_dicts;
 		g._database = db;
 	return db;
 
@@ -64,9 +68,21 @@ def profile_page(stuid):
 	mates = query_db("""SELECT users.zid, users.dp, users.name FROM users JOIN mates 
 			ON users.zid = mates.mate2 WHERE mates.mate1= ?""", [stuid]);
 	posts = query_db(
-	"""SELECT posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
-	FROM posts INNER JOIN users ON posts.zid = users.zid WHERE posts.parent = ? 
+	"""SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
+	FROM posts INNER JOIN users ON posts.zid = users.zid WHERE posts.zid = ? 
 	ORDER BY posts.date DESC, posts.time DESC""", [stuid]);
+
+	for post in posts:
+		post['children'] = query_db(
+		"""SELECT comments.id, comments.zid, comments.message, comments.date, comments.time, users.name, users.dp
+		FROM comments INNER JOIN users ON comments.zid = users.zid WHERE comments.parent = ?
+		ORDER BY comments.date DESC, comments.time DESC""", [post['id']]);
+
+		for comment in post['children']:
+			comment['children'] = query_db(
+			"""SELECT replies.zid, replies.message, replies.date, replies.time, users.name, users.dp
+			FROM replies INNER JOIN users ON replies.zid = users.zid WHERE replies.parent = ?
+			ORDER BY replies.date DESC, replies.time DESC""", [comment['id']]);
 
 	if not profile is None:
 		return get_template("profile.html", level="..", profile=profile, mates=mates, posts=posts);

@@ -41,7 +41,6 @@ cursor.execute('''CREATE TABLE posts(
 		longitude FLOAT,
 		latitude FLOAT,
 		zid INTEGER,
-		parent INTEGER,
 		message TEXT,
 		date DATE,
 		time TIME)''');
@@ -123,9 +122,9 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 			time = time.split('+')[0];
 
 			cursor.execute('''INSERT INTO posts
-			(longitude, latitude, zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?, ?, ?)''',
+			(longitude, latitude, zid, message, date, time) VALUES (?, ?, ?, ?, ?, ?)''',
 			(fields.get("longitude", ""), fields.get("latitude", ""), 
-				fields["from"].rstrip()[-7:], person, fields["message"].replace('\\n','\n'), date, time));
+				fields["from"].rstrip()[-7:], fields["message"].replace('\\n','\n'), date, time));
 			
 			cur = cursor.execute('SELECT last_insert_rowid() FROM posts');
 			postid = cur.fetchall()[0][0];
