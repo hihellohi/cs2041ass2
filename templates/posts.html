@@ -99,10 +99,10 @@
 				{% endfor %}{%endif%}
 				<form action="" method="POST">
 					<div class="form-group row">
-						<div class="col-md-11 col-sm-10">
+						<div class="col-md-10 col-sm-9">
 							<input placeholder="Write a reply" name="post" class="form-control" required></textarea>
 						</div>
-						<div class="col-md-1 col-sm-2">
+						<div class="col-md-2 col-sm-3">
 							<button type="submit" name="newreply" value="{{comment['id']}}" class="btn btn-primary">Post</button>
 						</div>
 					</div>
@@ -112,10 +112,10 @@
 		{% endfor %}{% endif %}
 		<form action="" method="POST">
 			<div class="form-group row">
-				<div class="col-md-11 col-sm-10">
+				<div class="col-md-10 col-sm-9">
 					<input placeholder="Write a comment" name="post" class="form-control" required></textarea>
 				</div>
-				<div class="col-md-1 col-sm-2">
+				<div class="col-md-2 col-sm-3">
 					<button type="submit" name="newcomment" value="{{post['id']}}" class="btn btn-primary">Post</button>
 				</div>
 			</div>
