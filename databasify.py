@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.5
 
-import glob, os, sys, sqlite3, shutil;#, re;
+import glob, os, sys, sqlite3, shutil, re;
 
 if(len(sys.argv) != 3):
 	print("usage: %s dbname directory" % sys.argv[0]); 
@@ -12,7 +12,7 @@ if(os.path.exists(sys.argv[1])):
 db = sqlite3.connect(sys.argv[1]);
 cursor = db.cursor();
 
-#studentid = re.compile(r'(\d{7})');
+studentid = re.compile(r'z(\d{7})');
 
 cursor.execute('''CREATE TABLE users(
 		zid INTEGER PRIMARY KEY,
@@ -61,6 +61,10 @@ cursor.execute('''CREATE TABLE replies(
 		date DATE,
 		time TIME)''');
 
+cursor.execute('''CREATE TABLE mentions(
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		zid INTEGER,
+		post INTEGER)''');
 
 if os.path.exists('static/pics'):
 	shutil.rmtree('static/pics');
@@ -120,14 +124,21 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 
 			date, time = fields['time'].split('T');
 			time = time.split('+')[0];
+			message = fields["message"].replace('\\n','\n');
 
 			cursor.execute('''INSERT INTO posts
 			(longitude, latitude, zid, message, date, time) VALUES (?, ?, ?, ?, ?, ?)''',
 			(fields.get("longitude", ""), fields.get("latitude", ""), 
-				fields["from"].rstrip()[-7:], fields["message"].replace('\\n','\n'), date, time));
+				fields["from"].rstrip()[-7:], message, date, time));
 			
 			cur = cursor.execute('SELECT last_insert_rowid() FROM posts');
 			postid = cur.fetchall()[0][0];
+
+			mentions = {};
+
+			m = studentid.findall(message);
+			for i in m:
+				mentions[i] = 1;
 
 			if os.path.exists(os.path.join(post, 'comments')):
 				for comment in glob.glob(os.path.join(post, 'comments', '*')):
@@ -140,13 +151,18 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 
 					date, time = fields['time'].split('T');
 					time = time.split('+')[0];
+					message = fields["message"].replace('\\n','\n');
 
 					cursor.execute('''INSERT INTO comments
 					(zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)''',
-					(fields["from"].rstrip()[-7:], postid, fields["message"].replace('\\n','\n'), date, time));
+					(fields["from"].rstrip()[-7:], postid, message, date, time));
 					
 					cur = cursor.execute('SELECT last_insert_rowid() FROM comments');
 					commentid = cur.fetchall()[0][0];
+
+					m = studentid.findall(message);
+					for i in m:
+						mentions[i] = 1;
 
 					if os.path.exists(os.path.join(comment, 'replies')):
 						for reply in glob.glob(os.path.join(comment, 'replies', '*')):
@@ -159,10 +175,18 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 
 							date, time = fields['time'].split('T');
 							time = time.split('+')[0];
+							message = fields.get("message", "").replace('\\n','\n');
 
 							cursor.execute('''INSERT INTO replies
 							(zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)''',
-							(fields["from"].rstrip()[-7:], commentid, fields.get("message", "").replace('\\n','\n'), date, time));
+							(fields["from"].rstrip()[-7:], commentid, message, date, time));
+
+							m = studentid.findall(message);
+							for i in m:
+								mentions[i] = 1;
+
+			for i in mentions.keys():
+				cursor.execute("INSERT INTO mentions (zid, post) VALUES (?, ?)", (i, postid))
 
 db.commit();
 db.close();

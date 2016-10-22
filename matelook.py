@@ -38,8 +38,23 @@ def get_template(f, **args):
 	args['login'] = session.get('login', None);
 	return render_template(f, **args);
 
+def get_comments(posts):
+	for post in posts:
+		post['children'] = query_db(
+		"""SELECT comments.id, comments.zid, comments.message, comments.date, comments.time, users.name, users.dp
+		FROM comments INNER JOIN users ON comments.zid = users.zid WHERE comments.parent = ?
+		ORDER BY comments.date DESC, comments.time DESC""", [post['id']]);
+
+		for comment in post['children']:
+			comment['children'] = query_db(
+			"""SELECT replies.zid, replies.message, replies.date, replies.time, users.name, users.dp
+			FROM replies INNER JOIN users ON replies.zid = users.zid WHERE replies.parent = ?
+			ORDER BY replies.date DESC, replies.time DESC""", [comment['id']]);
+
 @app.route('/')
 def root():
+	if 'login' in session:
+		return redirect("newsfeed/");
 	return get_template("main.html", level='.');
 
 @app.route('/login/', methods=['GET', 'POST'])
@@ -53,7 +68,7 @@ def login():
 		password = query_db("SELECT password FROM users WHERE zid = ?", [num], one=True);
 		if password and password['password'] == request.form['password']:
 			session['login'] = num;
-			return redirect("..");
+			return redirect("../newsfeed/");
 		else:
 			return get_template("login.html", level='..', zid=request.form['zid']);
 
@@ -71,22 +86,40 @@ def profile_page(stuid):
 	"""SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
 	FROM posts INNER JOIN users ON posts.zid = users.zid WHERE posts.zid = ? 
 	ORDER BY posts.date DESC, posts.time DESC""", [stuid]);
-
-	for post in posts:
-		post['children'] = query_db(
-		"""SELECT comments.id, comments.zid, comments.message, comments.date, comments.time, users.name, users.dp
-		FROM comments INNER JOIN users ON comments.zid = users.zid WHERE comments.parent = ?
-		ORDER BY comments.date DESC, comments.time DESC""", [post['id']]);
-
-		for comment in post['children']:
-			comment['children'] = query_db(
-			"""SELECT replies.zid, replies.message, replies.date, replies.time, users.name, users.dp
-			FROM replies INNER JOIN users ON replies.zid = users.zid WHERE replies.parent = ?
-			ORDER BY replies.date DESC, replies.time DESC""", [comment['id']]);
+	
+	get_comments(posts);
 
 	if not profile is None:
 		return get_template("profile.html", level="..", profile=profile, mates=mates, posts=posts);
 	return redirect("..");
+
+@app.route('/newsfeed/')
+def home():
+	if not 'login' in session:
+		return redirect('/login/');
+	else:
+		posts = query_db(
+		"""
+		SELECT T.id, T.zid, T.message, T.date, T.time, T.name, T.dp FROM(
+			SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
+				FROM posts 
+					JOIN users ON posts.zid = users.zid 
+				WHERE posts.zid = ? 
+			UNION SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp
+				FROM posts
+					JOIN mates ON posts.zid = mates.mate2
+					JOIN users ON users.zid = mates.mate2
+				WHERE mates.mate1 = ?
+			UNION SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp
+				FROM posts
+					JOIN mentions ON posts.id = mentions.post
+					JOIN users ON users.zid = posts.zid
+				WHERE mentions.zid = ?
+		) AS T
+		ORDER BY date DESC, time DESC""", [session['login']] * 3);
+		
+		get_comments(posts);
+		return get_template("home.html", level="..", posts=posts);
 
 @app.route('/search/', methods=['GET'])
 def search():
@@ -96,9 +129,12 @@ def search():
 			return get_template("suser.html", level="..", terms=request.args['terms'], users=results);
 		else:
 			results = query_db(
-			"""SELECT posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
-			FROM posts INNER JOIN users ON posts.zid = users.zid WHERE posts.message LIKE ? 
+			"""SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
+			FROM posts JOIN users ON posts.zid = users.zid WHERE posts.message LIKE ? 
 			ORDER BY posts.date DESC, posts.time DESC""", ['%' + request.args['terms'] + '%']);
+
+			get_comments(results);
+
 			return get_template("spost.html", level="..", terms=request.args['terms'], posts=results);
 	else:
 		return get_template("srequest.html", level="..");
@@ -106,6 +142,13 @@ def search():
 @app.route('/static/<path:path>')
 def send_static_file(path):
 	return send_from_directory('static', path);
+
+#	SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp FROM
+#		posts JOIN mates 
+#			ON posts.zid = mates.mate2 
+#		JOIN users
+#			ON users.zid = mates.mate2
+#	WHERE mates.mate1 = ?
 
 if __name__ == "__main__":
 	app.run();
