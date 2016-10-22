@@ -97,10 +97,29 @@
 					</div>
 
 				{% endfor %}{%endif%}
-				
+				<form action="" method="POST">
+					<div class="form-group row">
+						<div class="col-md-11 col-sm-10">
+							<input placeholder="Write a reply" name="post" class="form-control" required></textarea>
+						</div>
+						<div class="col-md-1 col-sm-2">
+							<button type="submit" name="newreply" value="{{comment['id']}}" class="btn btn-primary">Post</button>
+						</div>
+					</div>
+				</form>
 			</div>
 		</div>
 		{% endfor %}{% endif %}
+		<form action="" method="POST">
+			<div class="form-group row">
+				<div class="col-md-11 col-sm-10">
+					<input placeholder="Write a comment" name="post" class="form-control" required></textarea>
+				</div>
+				<div class="col-md-1 col-sm-2">
+					<button type="submit" name="newcomment" value="{{post['id']}}" class="btn btn-primary">Post</button>
+				</div>
+			</div>
+		</form>
 	</div>
 	</li>
 	{% endfor %}

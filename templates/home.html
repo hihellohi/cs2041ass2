@@ -4,6 +4,15 @@
 
 {% block body %}
 <div class="container">
+	<form action="" method="POST">
+		<div class="form-group" >
+			<textarea placeholder="Write a post" name="post" class="form-control" rows=3 required></textarea>
+		</div>
+		<button type="submit" name="newpost" class="btn btn-primary">Post</button>
+	</form>
+
+	<br>
+
 	{% include "posts.html" %}
 </div>
 {% endblock %}

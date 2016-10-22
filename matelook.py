@@ -1,12 +1,16 @@
 #!/usr/bin/env python3.5 
 import sqlite3;
 import os;
+import re;
 from flask import Flask, session, redirect, render_template, request, g;
+import datetime;
 
 app = Flask(__name__);
 app.secret_key = os.urandom(420);
 
 database = "dataset.db";
+
+studentid = re.compile(r'z(\d{7})');
 
 #src: http://flask.pocoo.org/docs/0.11/patterns/sqlite3/
 def make_dicts(cursor, row):
@@ -43,13 +47,13 @@ def get_comments(posts):
 		post['children'] = query_db(
 		"""SELECT comments.id, comments.zid, comments.message, comments.date, comments.time, users.name, users.dp
 		FROM comments INNER JOIN users ON comments.zid = users.zid WHERE comments.parent = ?
-		ORDER BY comments.date DESC, comments.time DESC""", [post['id']]);
+		ORDER BY comments.date, comments.time""", [post['id']]);
 
 		for comment in post['children']:
 			comment['children'] = query_db(
 			"""SELECT replies.zid, replies.message, replies.date, replies.time, users.name, users.dp
 			FROM replies INNER JOIN users ON replies.zid = users.zid WHERE replies.parent = ?
-			ORDER BY replies.date DESC, replies.time DESC""", [comment['id']]);
+			ORDER BY replies.date, replies.time""", [comment['id']]);
 
 @app.route('/')
 def root():
@@ -93,11 +97,25 @@ def profile_page(stuid):
 		return get_template("profile.html", level="..", profile=profile, mates=mates, posts=posts);
 	return redirect("..");
 
-@app.route('/newsfeed/')
+@app.route('/newsfeed/', methods=['GET', 'POST'])
 def home():
 	if not 'login' in session:
 		return redirect('/login/');
 	else:
+		if request.method == 'POST':
+			c = get_db().cursor();
+			now = datetime.datetime.now();
+			c.execute("INSERT INTO posts (zid, message, date, time) VALUES (?, ?, ?, ?)",
+					(session['login'], request.form['post'], now.date().isoformat(), now.time().isoformat().split('.')[0]));
+
+			cur = c.execute('SELECT last_insert_rowid() AS n FROM comments');
+			postid = cur.fetchall()[0]['n'];
+
+			for i in set(studentid.findall(request.form['post'])):
+				c.execute("INSERT INTO mentions (zid, post) VALUES (?, ?)", (i, postid));
+
+			get_db().commit();
+
 		posts = query_db(
 		"""
 		SELECT T.id, T.zid, T.message, T.date, T.time, T.name, T.dp FROM(
