@@ -55,6 +55,50 @@ def get_comments(posts):
 			FROM replies INNER JOIN users ON replies.zid = users.zid WHERE replies.parent = ?
 			ORDER BY replies.date, replies.time""", [comment['id']]);
 
+def comments():
+	if not 'login' in session:
+		return False;
+
+	c = get_db().cursor();
+	now = datetime.datetime.now();
+	query = 'INSERT INTO %s (zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)';
+
+	if 'newpost' in request.form:
+		c.execute("INSERT INTO posts (zid, message, date, time) VALUES (?, ?, ?, ?)",
+				(session['login'], request.form['post'], now.date().isoformat(), now.time().isoformat().split('.')[0]));
+
+		cur = c.execute('SELECT last_insert_rowid() AS n FROM posts');
+		postid = cur.fetchall()[0]['n'];
+
+		for i in set(studentid.findall(request.form['post'])):
+			c.execute("INSERT INTO mentions (zid, post) VALUES (?, ?)", (i, postid));
+
+	elif "newcomment" in request.form:
+		c.execute(query % 'comments', (session['login'], request.form['newcomment'], request.form['post'], 
+			now.date().isoformat(), now.time().isoformat().split('.')[0]));
+
+		for i in set(studentid.findall(request.form['post'])):
+			a = query_db("SELECT * FROM mentions WHERE zid = ? AND post = ?", 
+					(i, request.form['newcomment']), one = True);
+			if not a:
+				c.execute("INSERT INTO mentions (zid, post) VALUES (?, ?)", (i, request.form['newcomment']));
+
+	elif "newreply" in request.form:
+		print(request.form['newreply'], flush=True);
+		parent = query_db("SELECT parent FROM comments WHERE id = ?", [request.form['newreply']], one=True)['parent'];
+
+		c.execute(query % 'replies', (session['login'], request.form['newreply'], request.form['post'], 
+			now.date().isoformat(), now.time().isoformat().split('.')[0]));
+
+		for i in set(studentid.findall(request.form['post'])):
+			a = query_db("SELECT * FROM mentions WHERE zid = ? AND post = ?", 
+					(i, parent), one = True);
+			if not a:
+				c.execute("INSERT INTO mentions (zid, post) VALUES (?, ?)", (i, parent));
+	
+	get_db().commit();
+	return True;
+
 @app.route('/')
 def root():
 	if 'login' in session:
@@ -81,8 +125,12 @@ def logoff():
 	session.pop('login', None);
 	return redirect('.');
 
-@app.route('/z<int:stuid>/')
+@app.route('/z<int:stuid>/', methods=['GET', 'POST'])
 def profile_page(stuid):
+	if request.method == 'POST':
+		if not comments():
+			return redirect('login/');
+
 	profile = query_db("SELECT * FROM users WHERE zid = ?", [stuid], one=True);
 	mates = query_db("""SELECT users.zid, users.dp, users.name FROM users JOIN mates 
 			ON users.zid = mates.mate2 WHERE mates.mate1= ?""", [stuid]);
@@ -97,50 +145,42 @@ def profile_page(stuid):
 		return get_template("profile.html", level="..", profile=profile, mates=mates, posts=posts);
 	return redirect(".");
 
+
 @app.route('/newsfeed/', methods=['GET', 'POST'])
 def home():
 	if not 'login' in session:
 		return redirect('login/');
-	else:
-		if request.method == 'POST':
-			c = get_db().cursor();
-			now = datetime.datetime.now();
-			c.execute("INSERT INTO posts (zid, message, date, time) VALUES (?, ?, ?, ?)",
-					(session['login'], request.form['post'], now.date().isoformat(), now.time().isoformat().split('.')[0]));
 
-			cur = c.execute('SELECT last_insert_rowid() AS n FROM comments');
-			postid = cur.fetchall()[0]['n'];
+	if request.method == 'POST':
+		comments();
 
-			for i in set(studentid.findall(request.form['post'])):
-				c.execute("INSERT INTO mentions (zid, post) VALUES (?, ?)", (i, postid));
+	posts = query_db(
+	"""
+	SELECT T.id, T.zid, T.message, T.date, T.time, T.name, T.dp FROM(
+		SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
+			FROM posts 
+				JOIN users ON posts.zid = users.zid 
+			WHERE posts.zid = ? 
+		UNION SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp
+			FROM posts
+				JOIN mates ON posts.zid = mates.mate2
+				JOIN users ON users.zid = mates.mate2
+			WHERE mates.mate1 = ?
+		UNION SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp
+			FROM posts
+				JOIN mentions ON posts.id = mentions.post
+				JOIN users ON users.zid = posts.zid
+			WHERE mentions.zid = ?
+	) AS T
+	ORDER BY date DESC, time DESC""", [session['login']] * 3);
+	
+	get_comments(posts);
+	return get_template("home.html", level="..", posts=posts);
 
-			get_db().commit();
-
-		posts = query_db(
-		"""
-		SELECT T.id, T.zid, T.message, T.date, T.time, T.name, T.dp FROM(
-			SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
-				FROM posts 
-					JOIN users ON posts.zid = users.zid 
-				WHERE posts.zid = ? 
-			UNION SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp
-				FROM posts
-					JOIN mates ON posts.zid = mates.mate2
-					JOIN users ON users.zid = mates.mate2
-				WHERE mates.mate1 = ?
-			UNION SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp
-				FROM posts
-					JOIN mentions ON posts.id = mentions.post
-					JOIN users ON users.zid = posts.zid
-				WHERE mentions.zid = ?
-		) AS T
-		ORDER BY date DESC, time DESC""", [session['login']] * 3);
-		
-		get_comments(posts);
-		return get_template("home.html", level="..", posts=posts);
-
-@app.route('/search/', methods=['GET'])
+@app.route('/search/', methods=['GET', 'POST'])
 def search():
+	if request.method == 'POST':
+		comments();
 	if 'search' in request.args:
 		if request.args['criteria'] == 'users':
 			results = query_db("SELECT zid, name, dp FROM users WHERE name LIKE ?", ['%' + request.args['terms'] + '%']);
@@ -160,13 +200,6 @@ def search():
 @app.route('/static/<path:path>')
 def send_static_file(path):
 	return send_from_directory('static', path);
-
-#	SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp FROM
-#		posts JOIN mates 
-#			ON posts.zid = mates.mate2 
-#		JOIN users
-#			ON users.zid = mates.mate2
-#	WHERE mates.mate1 = ?
 
 if __name__ == "__main__":
 	app.run();
