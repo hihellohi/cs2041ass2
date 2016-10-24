@@ -25,9 +25,7 @@ z{{profile['zid']}}
 					<a class="row" href="../z{{mate['zid']}}/">
 						<div class="col-md-2 col-sm-3">
 
-							{% if mate['dp'] %}
-							<img src="..{{mate['dp']}}" class="img-responsive img-circle">
-							{%endif%} 
+							<img src="..{% if profile['dp'] %}{{profile['dp']}}{%else%}/static/placeholder.png{%endif%}" class="img-responsive img-circle">
 
 						</div>
 						<div class="col-md-10 col-sm-9">
@@ -49,7 +47,7 @@ z{{profile['zid']}}
 			<div class="row">
 
 				<div class="col-sm-4 col-md-4">
-					{% if profile['dp'] %}<img src="..{{profile['dp']}}" class="img-responsive img-rounded">{%endif%}
+					<img src="..{% if profile['dp'] %}{{profile['dp']}}{%else%}/static/placeholder.png{%endif%}" class="img-responsive img-rounded">
 				</div>
 
 				<div class="col-sm-6 col-md-6">

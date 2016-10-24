@@ -1,131 +1,55 @@
 {% block blah %} {% endblock %} <!--TEMP-->
 
-<ul class="media-list">
-	{% for post in posts %}
-	<li class="media">
-	<div class="media-left">
-		{% if post['dp'] %}
-		<a href="../z{{post['zid']}}/">
-			<img src="..{{post['dp']}}" class="media-object img-circle" style="width: 64px; height 64px">
-		</a>
-		{%endif%}
-	</div>
-	<div class="media-body">
-		<div class="media-heading clearfix">
-			<a class="pull-left" href="../z{{post['zid']}}/">
-				<h4>
-					{% if post['name'] %}
-					{{post['name']}}
-					{% else %}
-					z{{post['zid']}}
-					{% endif %}
-				</h4>
+<div class="media-list">
+{% for post in posts recursive %}
+	<div class="media">
+		<div class="media-left">
+			<a href="../z{{post['zid']}}/">
+				<img src="..{% if post['dp'] %}{{post['dp']}}{% else %}/static/placeholder.png{% endif %}" class="media-object img-circle" style="width: {{64 - loop.depth0 * 16}}px; height {{64 - loop.depth0 * 16}}px;">
 			</a>
-			<div class="pull-right">
-				{{post['date']}} {{post['time']}}
-			</div>
 		</div>
-
-		<p>
-		{{post['message']}}
-		</p>
-
-		<hr>
-
-		{% if post['children'] %}{% for comment in post['children'] %}
-		<div class="media">
-			<div class="media-left">
-				{% if comment['dp'] %}
-				<a href="../z{{comment['zid']}}/">
-					<img src="..{{comment['dp']}}" class="media-object img-circle" style="width: 48px; height 48px">
+		<div class="media-body">
+			<div class="media-heading clearfix">
+				<a class="pull-left" href="../z{{post['zid']}}/">
+					<h4>
+						{% if post['name'] %}
+						{{post['name']}}
+						{% else %}
+						z{{post['zid']}}
+						{% endif %}
+					</h4>
 				</a>
-				{%endif%}
+				<div class="pull-right">
+					{{post['date']}} {{post['time']}}
+				</div>
 			</div>
-			<div class="media-body">
-				<div class="media-heading clearfix">
-					<a class="pull-left" href="../z{{comment['zid']}}/">
-						<h5>
-							{% if comment['name'] %}
-							{{comment['name']}}
-							{% else %}
-							z{{comment['zid']}}
-							{% endif %}
-						</h5>
-					</a>
-					<div class="pull-right">
-						{{comment['date']}} {{comment['time']}}
+
+			<p>
+			{{post['message']}}
+			</p>
+
+			<hr>
+
+			<!--recur-->
+			{{loop(post['children'])}}
+
+			{% if login and loop.depth < 3 %}
+
+			<form action="" method="POST">
+				<div class="form-group row">
+					<div class="col-md-10 col-sm-9">
+						<input placeholder="Write a comment" name="post" class="form-control" required>
+					</div>
+					<div class="col-md-2 col-sm-3">
+					
+						<button type="submit" name="new{% if loop.depth0 %}reply{%else%}comment{%endif%}" value="{{post['id']}}" class="btn btn-primary">Post</button>
 					</div>
 				</div>
+			</form>
 
-				<p>
-				{{comment['message']}}
-				</p>
-
-				<hr>
-
-				{% if comment['children'] %}{% for comment in comment['children'] %}
-					<div class="media">
-						<div class="media-left">
-							{% if comment['dp'] %}
-							<a href="../z{{comment['zid']}}/">
-								<img src="..{{comment['dp']}}" class="media-object img-circle" style="width: 32px; height 32px">
-							</a>
-							{%endif%}
-						</div>
-						<div class="media-body">
-							<div class="media-heading clearfix">
-								<a class="pull-left" href="../z{{comment['zid']}}/">
-									<h5>
-										{% if comment['name'] %}
-										{{comment['name']}}
-										{% else %}
-										z{{comment['zid']}}
-										{% endif %}
-									</h5>
-								</a>
-								<div class="pull-right">
-									{{comment['date']}} {{comment['time']}}
-								</div>
-							</div>
-
-							<p>
-							{{comment['message']}}
-							</p>
-
-							<hr>
-						</div>
-					</div>
-
-				{% endfor %}{%endif%}
-				{% if login %}
-				<form action="" method="POST">
-					<div class="form-group row">
-						<div class="col-md-10 col-sm-9">
-							<input placeholder="Write a reply" name="post" class="form-control" required></textarea>
-						</div>
-						<div class="col-md-2 col-sm-3">
-							<button type="submit" name="newreply" value="{{comment['id']}}" class="btn btn-primary">Post</button>
-						</div>
-					</div>
-				</form>
-				{%endif%}
-			</div>
+			{%endif%}
 		</div>
-		{% endfor %}{% endif %}
-		{% if login %}
-		<form action="" method="POST">
-			<div class="form-group row">
-				<div class="col-md-10 col-sm-9">
-					<input placeholder="Write a comment" name="post" class="form-control" required></textarea>
-				</div>
-				<div class="col-md-2 col-sm-3">
-					<button type="submit" name="newcomment" value="{{post['id']}}" class="btn btn-primary">Post</button>
-				</div>
-			</div>
-		</form>
-		{%endif%}
 	</div>
-	</li>
-	{% endfor %}
-</ul>
 
+{% endfor %}
+</div>

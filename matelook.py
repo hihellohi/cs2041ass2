@@ -127,6 +127,24 @@ def root():
 		return redirect("newsfeed/");
 	return get_template("main.html", level='.');
 
+@app.route('/signup/', methods=['GET', 'POST'])
+def signup():
+	if request.method == 'GET':
+		return get_template("signup.html", level='..');
+
+	num = request.form['zid'].lstrip('z');
+	tmp = query_db('SELECT * FROM users WHERE zid = ? OR email = ?', [num, request.form['email']], one=True)
+	if tmp:
+		return get_template("signup.html", 
+				dupzid = tmp['zid'] == int(num), dupemail = tmp['email'] == request.form['email']);
+
+	get_db().cursor().execute('INSERT INTO users (zid, email, password) VALUES (?, ?, ?)', 
+			[num, request.form['email'], request.form['password']]);
+	get_db().commit();		
+	session['login'] = num;
+	return redirect('newsfeed/');
+
+
 @app.route('/login/', methods=['GET', 'POST'])
 def login():
 	if 'login' in session:
