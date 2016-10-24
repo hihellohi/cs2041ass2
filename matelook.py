@@ -13,6 +13,7 @@ database = "dataset.db";
 studentid = re.compile(r'z(\d{7})');
 
 #src: http://flask.pocoo.org/docs/0.11/patterns/sqlite3/
+#sqlite code
 def make_dicts(cursor, row):
     return dict((cursor.description[idx][0], value)
                 for idx, value in enumerate(row))
@@ -38,10 +39,12 @@ def close_connection(exception):
 		db.close();
 #endsrc
 
+#wrapper for render_template, pass login cookie
 def get_template(f, **args):
 	args['login'] = session.get('login', None);
 	return render_template(f, **args);
 
+#get comments and replies for a list of posts
 def get_comments(posts):
 	for post in posts:
 		post['children'] = query_db(
@@ -55,49 +58,68 @@ def get_comments(posts):
 			FROM replies INNER JOIN users ON replies.zid = users.zid WHERE replies.parent = ?
 			ORDER BY replies.date, replies.time""", [comment['id']]);
 
-def comments():
+def get_mentions(string):
+	out = [];
+	for i in set(studentid.findall(string)):
+		if query_db("SELECT * FROM users WHERE zid = ?", [i]):
+			out.append(i);
+
+	return out;
+
+
+# inserts posts/comments/replies
+def insert_comments():
 	if not 'login' in session:
 		return False;
 
 	c = get_db().cursor();
 	now = datetime.datetime.now();
+	date = now.date().isoformat();
+	time = now.time().isoformat().split('.')[0];
 	query = 'INSERT INTO %s (zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)';
+	mentionsquery =  "INSERT INTO mentions (zid, post) VALUES (?, ?)";
 
 	if 'newpost' in request.form:
 		c.execute("INSERT INTO posts (zid, message, date, time) VALUES (?, ?, ?, ?)",
-				(session['login'], request.form['post'], now.date().isoformat(), now.time().isoformat().split('.')[0]));
+				(session['login'], request.form['post'], date, time));
 
 		cur = c.execute('SELECT last_insert_rowid() AS n FROM posts');
 		postid = cur.fetchall()[0]['n'];
 
-		for i in set(studentid.findall(request.form['post'])):
-			c.execute("INSERT INTO mentions (zid, post) VALUES (?, ?)", (i, postid));
+		for i in get_mentions(request.form['post']):
+			c.execute(mentionsquery, (i, postid));
 
 	elif "newcomment" in request.form:
 		c.execute(query % 'comments', (session['login'], request.form['newcomment'], request.form['post'], 
-			now.date().isoformat(), now.time().isoformat().split('.')[0]));
+			date, time));
 
-		for i in set(studentid.findall(request.form['post'])):
+		for i in get_mentions(request.form['post']):
 			a = query_db("SELECT * FROM mentions WHERE zid = ? AND post = ?", 
 					(i, request.form['newcomment']), one = True);
 			if not a:
-				c.execute("INSERT INTO mentions (zid, post) VALUES (?, ?)", (i, request.form['newcomment']));
+				c.execute(mentionsquery, (i, request.form['newcomment']));
 
 	elif "newreply" in request.form:
 		print(request.form['newreply'], flush=True);
 		parent = query_db("SELECT parent FROM comments WHERE id = ?", [request.form['newreply']], one=True)['parent'];
 
 		c.execute(query % 'replies', (session['login'], request.form['newreply'], request.form['post'], 
-			now.date().isoformat(), now.time().isoformat().split('.')[0]));
+			date, time));
 
-		for i in set(studentid.findall(request.form['post'])):
+		for i in get_mentions(request.form['post']):
 			a = query_db("SELECT * FROM mentions WHERE zid = ? AND post = ?", 
 					(i, parent), one = True);
 			if not a:
-				c.execute("INSERT INTO mentions (zid, post) VALUES (?, ?)", (i, parent));
+				c.execute(mentionsquery, (i, parent));
 	
 	get_db().commit();
 	return True;
+
+@app.errorhandler(404)
+def not_found(error):
+	if request.path == '/':
+		return redirect(request.base_url);
+	return "404 Page Not Found!";
 
 @app.route('/')
 def root():
@@ -128,7 +150,7 @@ def logoff():
 @app.route('/z<int:stuid>/', methods=['GET', 'POST'])
 def profile_page(stuid):
 	if request.method == 'POST':
-		if not comments():
+		if not insert_comments():
 			return redirect('login/');
 
 	profile = query_db("SELECT * FROM users WHERE zid = ?", [stuid], one=True);
@@ -147,12 +169,12 @@ def profile_page(stuid):
 
 
 @app.route('/newsfeed/', methods=['GET', 'POST'])
-def home():
+def newsfeed():
 	if not 'login' in session:
 		return redirect('login/');
 
 	if request.method == 'POST':
-		comments();
+		insert_comments();
 
 	posts = query_db(
 	"""
@@ -180,7 +202,7 @@ def home():
 @app.route('/search/', methods=['GET', 'POST'])
 def search():
 	if request.method == 'POST':
-		comments();
+		insert_comments();
 	if 'search' in request.args:
 		if request.args['criteria'] == 'users':
 			results = query_db("SELECT zid, name, dp FROM users WHERE name LIKE ?", ['%' + request.args['terms'] + '%']);
