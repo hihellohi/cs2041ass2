@@ -1,0 +1,21 @@
+{% extends "main.html" %}
+
+{% block title %}Password Recovery{% endblock %}
+
+{% block body %}
+<div class="container">
+	<form method="POST" action="">
+		<div class="panel panel-primary">
+			<div class="panel-heading"><h1 class="panel-title">Recovery</h1></div>
+			<div class="panel-body">
+				<p> Enter your email and we will send your password back to you </p>
+				<div class="form-group">
+					<input type="email" name="email" placeholder="email" class="form-control" required>
+				</div>
+
+				<button type="submit" class="btn btn-primary">Submit</button>
+			</div>
+		</div>
+	</form>
+</div>
+{% endblock %}

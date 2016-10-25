@@ -122,12 +122,9 @@ def insert_comments():
 	return True;
 
 def send_email(subject, to, body):
-	user = "noreplymatelook@gmail.com";
+	user = "andrewt@unsw.edu.au";
 
-	with smtplib.SMTP("smtp.gmail.com", port=587) as s:
-		s.ehlo();
-		s.starttls();
-		s.login(user, "correct horse battery staple");
+	with smtplib.SMTP('smtp.cse.unsw.edu.au') as s:
 		s.sendmail(user, to, "From: %s\nTo: %s\nSubject: %s\n\n%s\n" % (user, ', '.join(to), subject, body));
 
 @app.errorhandler(404)
@@ -156,7 +153,7 @@ def signup():
 		) AS T 
 		WHERE T.zid = ? OR T.email = ?''', [num, request.form['email']], one=True)
 	if tmp:
-		return get_template("signup.html", 
+		return get_template("signup.html", level='..',
 				dupzid = tmp['zid'] == int(num), dupemail = tmp['email'] == request.form['email'],
 				zid = request.form['zid'], email = request.form['email']);
 
@@ -170,6 +167,16 @@ def signup():
 @app.route('/confirm/')
 def preconfirm():
 	return get_template("preconfirm.html", level="..");
+
+@app.route('/recovery/', methods=['GET', 'POST'])
+def recovery():
+	if request.method == 'GET':
+		return get_template("recovery.html", level="..");
+	credentials= query_db("SELECT zid, password FROM users WHERE email = ?",[request.form['email']],one=True); 
+	if credentials:
+		send_email("password recovery", [request.form['email']], 
+			"your zID is z%s\nyour password is %s\n" % (credentials['zid'], credentials['password']));
+	return redirect('.');
 
 @app.route('/c<int:stuid>/')
 def postconfirm(stuid):
