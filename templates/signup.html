@@ -10,7 +10,7 @@
 			<div class="panel-body">
 				<div class="form-group">
 					<label for="email">Email address</label>
-					<input type="email" name="email" id="email" placeholder="email" class="form-control" required> 
+					<input type="email" name="email" id="email" value="{{email}}" placeholder="email" class="form-control" required> 
 					{% if dupemail %}
 					<small class="form-text text-danger">email already exists!</small>
 					{% endif %}
@@ -18,7 +18,7 @@
 
 				<div class="form-group">
 					<label for="zid">zID</label>
-					<input type="text" name="zid" id="zid" placeholder="zID" class="form-control" required>
+					<input type="text" name="zid" id="zid" value="{{zid}}" placeholder="zID" class="form-control" required>
 
 					{% if dupzid %}
 					<small class="form-text text-danger">zID already exists!</small>

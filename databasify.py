@@ -26,6 +26,11 @@ cursor.execute('''CREATE TABLE users(
 		birthday DATE,
 		dp TEXT)''');
 
+cursor.execute('''CREATE TABLE pending(
+		zid INTEGER PRIMARY KEY,
+		email TEXT,
+		password TEXT)''');
+
 cursor.execute('''CREATE TABLE mates(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		mate1 INTEGER,

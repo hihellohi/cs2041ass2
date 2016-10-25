@@ -4,6 +4,8 @@ import os;
 import re;
 from flask import Flask, session, redirect, render_template, request, g;
 import datetime;
+import smtplib
+from email.mime.text import MIMEText;
 
 app = Flask(__name__);
 app.secret_key = "thisistext";
@@ -58,6 +60,7 @@ def get_comments(posts):
 			FROM replies INNER JOIN users ON replies.zid = users.zid WHERE replies.parent = ?
 			ORDER BY replies.date, replies.time""", [comment['id']]);
 
+#get all mantions in a string
 def get_mentions(string):
 	out = [];
 	for i in set(studentid.findall(string)):
@@ -69,6 +72,9 @@ def get_mentions(string):
 
 # inserts posts/comments/replies
 def insert_comments():
+	if request.method != 'POST':
+		return True;
+
 	if not 'login' in session:
 		return False;
 
@@ -77,7 +83,7 @@ def insert_comments():
 	date = now.date().isoformat();
 	time = now.time().isoformat().split('.')[0];
 	query = 'INSERT INTO %s (zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)';
-	mentionsquery =  "INSERT INTO mentions (zid, post) VALUES (?, ?)";
+	mentionsquery = "INSERT INTO mentions (zid, post) VALUES (?, ?)";
 
 	if 'newpost' in request.form:
 		c.execute("INSERT INTO posts (zid, message, date, time) VALUES (?, ?, ?, ?)",
@@ -90,8 +96,8 @@ def insert_comments():
 			c.execute(mentionsquery, (i, postid));
 
 	elif "newcomment" in request.form:
-		c.execute(query % 'comments', (session['login'], request.form['newcomment'], request.form['post'], 
-			date, time));
+		c.execute(query % 'comments', 
+				(session['login'], request.form['newcomment'], request.form['post'], date, time));
 
 		for i in get_mentions(request.form['post']):
 			a = query_db("SELECT * FROM mentions WHERE zid = ? AND post = ?", 
@@ -100,8 +106,8 @@ def insert_comments():
 				c.execute(mentionsquery, (i, request.form['newcomment']));
 
 	elif "newreply" in request.form:
-		print(request.form['newreply'], flush=True);
-		parent = query_db("SELECT parent FROM comments WHERE id = ?", [request.form['newreply']], one=True)['parent'];
+		parent = query_db("SELECT parent FROM comments WHERE id = ?", 
+				[request.form['newreply']], one=True)['parent'];
 
 		c.execute(query % 'replies', (session['login'], request.form['newreply'], request.form['post'], 
 			date, time));
@@ -115,14 +121,24 @@ def insert_comments():
 	get_db().commit();
 	return True;
 
+def send_email(subject, to, body):
+	user = "noreplymatelook@gmail.com";
+
+	with smtplib.SMTP("smtp.gmail.com", port=587) as s:
+		s.ehlo();
+		s.starttls();
+		s.login(user, "correct horse battery staple");
+		s.sendmail(user, to, "From: %s\nTo: %s\nSubject: %s\n\n%s\n" % (user, ', '.join(to), subject, body));
+
 @app.errorhandler(404)
 def not_found(error):
 	if request.path == '/':
 		return redirect(request.base_url);
-	return "404 Page Not Found!";
+	return "404 Page Not Found!", 404;
 
 @app.route('/')
 def root():
+
 	if 'login' in session:
 		return redirect("newsfeed/");
 	return get_template("main.html", level='.');
@@ -133,17 +149,43 @@ def signup():
 		return get_template("signup.html", level='..');
 
 	num = request.form['zid'].lstrip('z');
-	tmp = query_db('SELECT * FROM users WHERE zid = ? OR email = ?', [num, request.form['email']], one=True)
+	tmp = query_db('''
+		SELECT T.zid, T.email FROM (
+			SELECT zid, email FROM users
+			UNION SELECT zid, email FROM pending
+		) AS T 
+		WHERE T.zid = ? OR T.email = ?''', [num, request.form['email']], one=True)
 	if tmp:
 		return get_template("signup.html", 
-				dupzid = tmp['zid'] == int(num), dupemail = tmp['email'] == request.form['email']);
+				dupzid = tmp['zid'] == int(num), dupemail = tmp['email'] == request.form['email'],
+				zid = request.form['zid'], email = request.form['email']);
 
-	get_db().cursor().execute('INSERT INTO users (zid, email, password) VALUES (?, ?, ?)', 
+	get_db().cursor().execute('INSERT INTO pending (zid, email, password) VALUES (?, ?, ?)', 
 			[num, request.form['email'], request.form['password']]);
 	get_db().commit();		
-	session['login'] = num;
-	return redirect('newsfeed/');
+	send_email("account confirmation", [request.form['email']], 
+			"follow this link to confirm your email: %s" % request.url_root + 'c' + num);
+	return redirect('confirm/');
 
+@app.route('/confirm/')
+def preconfirm():
+	return get_template("preconfirm.html", level="..");
+
+@app.route('/c<int:stuid>/')
+def postconfirm(stuid):
+	new = query_db("SELECT * FROM pending WHERE zid = ?", [stuid], one=True);
+	if not new:
+		return "404 Page Not Found!", 404;
+
+	cursor = get_db().cursor();
+	cursor.execute("DELETE FROM pending WHERE zid = ?", [stuid]);
+	cursor.execute("INSERT INTO users (zid, email, password) VALUES (?, ?, ?)", 
+			[new['zid'], new['email'], new['password']]);
+	get_db().commit();
+	
+	session['login'] = str(stuid);
+	return redirect('newsfeed/');
+	
 
 @app.route('/login/', methods=['GET', 'POST'])
 def login():
@@ -167,9 +209,8 @@ def logoff():
 
 @app.route('/z<int:stuid>/', methods=['GET', 'POST'])
 def profile_page(stuid):
-	if request.method == 'POST':
-		if not insert_comments():
-			return redirect('login/');
+	if not insert_comments():
+		return redirect('login/');
 
 	profile = query_db("SELECT * FROM users WHERE zid = ?", [stuid], one=True);
 	mates = query_db("""SELECT users.zid, users.dp, users.name FROM users JOIN mates 
@@ -191,8 +232,8 @@ def newsfeed():
 	if not 'login' in session:
 		return redirect('login/');
 
-	if request.method == 'POST':
-		insert_comments();
+	if not insert_comments():
+		return redirect('login/');
 
 	posts = query_db(
 	"""
@@ -219,8 +260,10 @@ def newsfeed():
 
 @app.route('/search/', methods=['GET', 'POST'])
 def search():
-	if request.method == 'POST':
-		insert_comments();
+
+	if not insert_comments():
+		return redirect('login/');
+
 	if 'search' in request.args:
 		if request.args['criteria'] == 'users':
 			results = query_db("SELECT zid, name, dp FROM users WHERE name LIKE ?", ['%' + request.args['terms'] + '%']);
