@@ -13,6 +13,7 @@ app.secret_key = "thisistext";
 database = "dataset.db";
 
 studentid = re.compile(r'z(\d{7})');
+innocenttag = re.compile(r'&lt;(/?[bui])&gt;');
 
 #src: http://flask.pocoo.org/docs/0.11/patterns/sqlite3/
 #sqlite code
@@ -43,7 +44,7 @@ def close_connection(exception):
 
 #wrapper for render_template, pass login cookie
 def get_template(f, **args):
-	args['login'] = session.get('login', None);
+	args['login'] = int(session['login']) if 'login' in session else None;
 	return render_template(f, **args);
 
 #get comments and replies for a list of posts
@@ -135,7 +136,6 @@ def not_found(error):
 
 @app.route('/')
 def root():
-
 	if 'login' in session:
 		return redirect("newsfeed/");
 	return get_template("main.html", level='.');
@@ -176,7 +176,7 @@ def recovery():
 	if credentials:
 		send_email("password recovery", [request.form['email']], 
 			"your zID is z%s\nyour password is %s\n" % (credentials['zid'], credentials['password']));
-	return redirect('.');
+	return get_template("postrecov.html", level="..", email = request.form['email']);
 
 @app.route('/c<int:stuid>/')
 def postconfirm(stuid):
@@ -220,8 +220,12 @@ def profile_page(stuid):
 		return redirect('login/');
 
 	profile = query_db("SELECT * FROM users WHERE zid = ?", [stuid], one=True);
+	profile['profile'] = profile['profile'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;');
+	profile['profile'] = innocenttag.sub('<\g<1>>', profile['profile']);
+
 	mates = query_db("""SELECT users.zid, users.dp, users.name FROM users JOIN mates 
 			ON users.zid = mates.mate2 WHERE mates.mate1= ?""", [stuid]);
+
 	posts = query_db(
 	"""SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
 	FROM posts INNER JOIN users ON posts.zid = users.zid WHERE posts.zid = ? 
@@ -233,6 +237,16 @@ def profile_page(stuid):
 		return get_template("profile.html", level="..", profile=profile, mates=mates, posts=posts);
 	return redirect(".");
 
+@app.route('/eprofile/', methods=['GET', 'POST'])
+def eprof():
+	if not 'login' in session:
+		return redirect('login/');
+	if request.method == 'POST':
+		get_db().cursor().execute("UPDATE users SET profile = ?, name = ? WHERE zid = ?", 
+				[request.form['pt'], request.form['name'], session['login']]);
+		get_db().commit();
+		return redirect('z' + str(session['login']));
+	return get_template("eprofile.html", level="..", profile=query_db("SELECT * FROM users WHERE zid = ?", [session['login']], one=True));
 
 @app.route('/newsfeed/', methods=['GET', 'POST'])
 def newsfeed():

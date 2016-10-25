@@ -13,11 +13,9 @@ value="{{terms}}"
 	{% for result in users %}
 	<li class="media">
 	<div class="media-left">
-		{% if result['dp'] %}
 		<a href="../z{{result['zid']}}/">
-			<img src="..{{result['dp']}}" class="media-object img-circle" style="width: 64px; height 64px">
+			<img src="..{% if result['dp'] %}{{result['dp']}}{%else%}/static/placeholder.png{%endif%}" class="media-object img-circle" style="width: 64px; height 64px">
 		</a>
-		{%endif%}
 	</div>
 	<div class="media-body">
 		<a href="../z{{result['zid']}}/">

@@ -1,0 +1,26 @@
+{% extends "main.html" %}
+
+{% block title %}Edit profile{% endblock %}
+
+{% block body %}
+<div class="container">
+	<form method="POST" action="">
+		<div class="panel panel-primary">
+			<div class="panel-heading"><h1 class="panel-title">Edit Profile</h1></div>
+			<div class="panel-body">
+				<div class="form-group">
+					<label for="name">Full Name</label>
+					<input type="text" name="name" id="name" value="{% if profile['name'] %}{{profile['name']}}{% endif %}" placeholder="Name" class="form-control"> 
+				</div>
+
+				<div class="form-group">
+					<label for="pt">Profile Text</label>
+					<textarea placeholder="Profile Text" name="pt" id="pt" class="form-control" rows=3>{% if profile['profile'] %}{{profile['profile']}}{% endif %}</textarea>
+				</div>
+				<button type="submit" class="btn btn-primary">Submit</button>
+			</div>
+		</div>
+	</form>
+</div>
+{% endblock %}
+

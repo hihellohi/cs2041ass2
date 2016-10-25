@@ -11,3 +11,5 @@
 24/10/16	13:00	15:00	fix flask root bug and tidied up code. level 2 finished
 24/10/16	18:00	20:00	added signing up (no email) and condensed post template
 25/10/16	12:00	14:00	confirmation emails
+25/10/16	14:00	18:00	recovery and profile editing
+25/10/16	19:00	20:00	innocent profile tags

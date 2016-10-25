@@ -18,14 +18,14 @@ z{{profile['zid']}}
 <div class="container">
 	<div class="row">
 		<div class="col-sm-3 col-md-2 sidebar">
-			<h3>Mates</h3>
+			<h3>{% if profile['name'] %}{{profile['name']}}{% else %}z{{profile['zid']}}{% endif %}'s Mates</h3>
 			<ul class="nav nav-sidebar">
 				{% for mate in mates %}
 				<li>
 					<a class="row" href="../z{{mate['zid']}}/">
 						<div class="col-md-2 col-sm-3">
 
-							<img src="..{% if profile['dp'] %}{{mate['dp']}}{%else%}/static/placeholder.png{%endif%}" class="img-responsive img-circle">
+							<img src="..{% if mate['dp'] %}{{mate['dp']}}{%else%}/static/placeholder.png{%endif%}" style="Width: 24px; Height: 24px;" class="img-circle">
 
 						</div>
 						<div class="col-md-10 col-sm-9">
@@ -51,7 +51,10 @@ z{{profile['zid']}}
 				</div>
 
 				<div class="col-sm-6 col-md-6">
-					<h2>About</h2>
+					<h2>About
+					{% if login == profile['zid'] %}
+					<a href="../eprofile/" class="btn btn-success">Edit</a>
+					{%endif%}</h2>
 					<p>
 					{%if profile['birthday']%}
 					<b>Birthday:</b> {{profile['birthday']}}
@@ -69,8 +72,16 @@ z{{profile['zid']}}
 				</div>
 			</div>
 
+			{% if profile['profile'] %}
 			<br>
 
+			<h2>Profile Text</h2>
+			<p style="white-space: pre-wrap;">{{profile['profile'] | safe}}</i></b></u></p>
+			{% endif %}
+
+			<br>
+
+			<h2>Posts</h2>
 			{% include "posts.html" %}
 		</div>
 	</div>

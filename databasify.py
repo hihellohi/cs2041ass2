@@ -18,6 +18,7 @@ cursor.execute('''CREATE TABLE users(
 		zid INTEGER PRIMARY KEY,
 		name TEXT,
 		program TEXT,
+		profile TEXT,
 		latitude FLOAT,
 		longitude FLOAT,
 		suburb TEXT,
