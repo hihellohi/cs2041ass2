@@ -35,7 +35,8 @@ cursor.execute('''CREATE TABLE pending(
 cursor.execute('''CREATE TABLE mates(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		mate1 INTEGER,
-		mate2 INTEGER)''');
+		mate2 INTEGER,
+		pending INTEGER)''');
 
 cursor.execute('''CREATE TABLE courses(
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -111,7 +112,7 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 		tmp = fields["mates"].split(",");
 		for mate in tmp:
 			mate = mate.rstrip('] \n')[-7:];
-			cursor.execute('INSERT INTO mates (mate1, mate2) VALUES (?, ?)', (person, mate));
+			cursor.execute('INSERT INTO mates (mate1, mate2, pending) VALUES (?, ?, 0)', (person, mate));
 
 	if "courses" in fields:
 		tmp = fields["courses"].split(",");

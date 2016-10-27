@@ -19,6 +19,17 @@ z{{profile['zid']}}
 	<div class="row">
 		<div class="col-sm-3 col-md-2 sidebar">
 			<h3>{% if profile['name'] %}{{profile['name']}}{% else %}z{{profile['zid']}}{% endif %}'s Mates</h3>
+			{% if login and login != profile['zid'] %}
+			<form method="POST" action="">
+			{% if not ismate %}
+				<button type="submit" name="matereq" value="1" class="btn btn-success">Send Mate Request</button>
+			{% elif not ismate['pending'] %}
+				<button type="submit" name="matereq" class="btn btn-default">Unmate</button>
+			{% else %}
+				<button type="submit" name="matereq" class="btn btn-default">Cancel Mate Request</button>
+			{% endif %}
+			</form>
+			{% endif %}
 			<ul class="nav nav-sidebar">
 				{% for mate in mates %}
 				<li>

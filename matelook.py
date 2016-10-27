@@ -90,7 +90,7 @@ def insert_comments():
 		c.execute("INSERT INTO posts (zid, message, date, time) VALUES (?, ?, ?, ?)",
 				(session['login'], request.form['post'], date, time));
 
-		cur = c.execute('SELECT last_insert_rowid() AS n FROM posts');
+		cur = c.execute('SELECT last_insert_rowid() AS n');
 		postid = cur.fetchall()[0]['n'];
 
 		for i in get_mentions(request.form['post']):
@@ -161,7 +161,7 @@ def signup():
 			[num, request.form['email'], request.form['password']]);
 	get_db().commit();		
 	send_email("account confirmation", [request.form['email']], 
-			"follow this link to confirm your email: %s" % request.url_root + 'c' + num);
+			"follow this link to confirm your email: %s" % request.url_root + 'c' + str((int(num) + 3) * 7));
 	return redirect('confirm/');
 
 @app.route('/confirm/')
@@ -180,6 +180,7 @@ def recovery():
 
 @app.route('/c<int:stuid>/')
 def postconfirm(stuid):
+	stuid = int(stuid/7) - 3;
 	new = query_db("SELECT * FROM pending WHERE zid = ?", [stuid], one=True);
 	if not new:
 		return "404 Page Not Found!", 404;
@@ -220,17 +221,41 @@ def profile_page(stuid):
 		return redirect('login/');
 
 	profile = query_db("SELECT * FROM users WHERE zid = ?", [stuid], one=True);
-	if profile['profile']:
-		profile['profile'] = profile['profile'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;');
-		profile['profile'] = innocenttag.sub('<\g<1>>', profile['profile']);
+	
+	if profile is None:
+		return "404 Page Not Found!", 404;
 
 	ismate = False;
-	if 'login' in session:
-		ismate = query_db("""SELECT id FROM users WHERE mate1 = ? AND mate2 = ?""", 
-				[session['login'], stuid], one=True);
+	if 'login' in session and session['login'] != str(stuid):
+		ismate = query_db("""SELECT pending FROM mates WHERE mate1 = ? AND mate2 = ?""", 
+					[session['login'], stuid], one=True);
+
+		if 'matereq' in request.form:
+			if request.form['matereq'] and not ismate:
+				cursor = get_db().cursor();
+				cursor.execute("INSERT INTO mates (mate1, mate2, pending) VALUES (?, ?, 1)",
+						[stuid, session['login']]);
+				cursor.execute("INSERT INTO mates (mate1, mate2, pending) VALUES (?, ?, 1)",
+						[session['login'], stuid]);
+				get_db().commit();
+
+				mateid = query_db("SELECT last_insert_rowid() AS n", one=True)['n'];
+				send_email("Mate request", [profile['email']], 
+						"""z%s sent you a mate request
+						To accept/decline, go to this link: %s""" 
+						% (session['login'], request.url_root + 'm' + str((mateid + 3) * 7)));
+
+				ismate = {"pending": True};
+			elif not request.form['matereq']:
+				get_db().cursor().execute("""DELETE FROM mates WHERE 
+					(mate1 = ? AND mate2 = ?) OR (mate2 = ? AND mate1 = ?)""", 
+					[session['login'], stuid, session['login'], stuid]);
+				get_db().commit();
+				ismate = None;
+
 
 	mates = query_db("""SELECT users.zid, users.dp, users.name FROM users JOIN mates 
-			ON users.zid = mates.mate2 WHERE mates.mate1= ?""", [stuid]);
+			ON users.zid = mates.mate2 WHERE mates.mate1 = ? AND NOT mates.pending""", [stuid]);
 
 	posts = query_db(
 	"""SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
@@ -239,11 +264,37 @@ def profile_page(stuid):
 	
 	get_comments(posts);
 
-	if not profile is None:
-		return get_template("profile.html", level="..", 
-				profile=profile, mates=mates, posts=posts, ismate = ismate);
+	if profile['profile']:
+		profile['profile'] = profile['profile'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;');
+		profile['profile'] = innocenttag.sub('<\g<1>>', profile['profile']);
 
-	return redirect(".");
+	return get_template("profile.html", level="..", 
+			profile=profile, mates=mates, posts=posts, ismate = ismate);
+
+@app.route('/m<int:mateid>/', methods=['GET', 'POST'])
+def new_mate(mateid):
+	mateid = int(mateid / 7) - 3;
+
+	if request.method == "POST":
+		cursor = get_db().cursor();
+		if "confirm" in request.form:
+			cursor.execute("UPDATE mates SET pending = 0 WHERE id = ? OR id = ?", [mateid, mateid - 1]);
+			get_db().commit();
+			return redirect('.');
+		else:
+			cursor.execute("DELETE FROM mates WHERE id = ? OR id = ?", [mateid, mateid - 1]);
+			get_db().commit();
+			return redirect('.');
+
+
+	profile = query_db(
+			"SELECT users.zid, users.name FROM mates JOIN users ON mates.mate1 = users.zid WHERE mates.id = ?", 
+			[mateid], one=True);
+
+	if not request:
+		return "404 Page Not Found!", 404;
+
+	return get_template("newmate.html", level="..", profile=profile);
 
 @app.route('/eprofile/', methods=['GET', 'POST'])
 def eprof():
@@ -275,7 +326,7 @@ def newsfeed():
 			FROM posts
 				JOIN mates ON posts.zid = mates.mate2
 				JOIN users ON users.zid = mates.mate2
-			WHERE mates.mate1 = ?
+			WHERE mates.mate1 = ? AND NOT mates.pending 
 		UNION SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp
 			FROM posts
 				JOIN mentions ON posts.id = mentions.post
