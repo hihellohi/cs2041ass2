@@ -123,7 +123,7 @@ def insert_comments():
 	return True;
 
 def send_email(subject, to, body):
-	user = "andrewt@unsw.edu.au";
+	user = "noreply@matelook.com";
 
 	with smtplib.SMTP('smtp.cse.unsw.edu.au') as s:
 		s.sendmail(user, to, "From: %s\nTo: %s\nSubject: %s\n\n%s\n" % (user, ', '.join(to), subject, body));
@@ -172,7 +172,7 @@ def preconfirm():
 def recovery():
 	if request.method == 'GET':
 		return get_template("recovery.html", level="..");
-	credentials= query_db("SELECT zid, password FROM users WHERE email = ?",[request.form['email']],one=True); 
+	credentials= query_db("SELECT zid, password FROM users WHERE email = ?",[request.form['email']], one=True); 
 	if credentials:
 		send_email("password recovery", [request.form['email']], 
 			"your zID is z%s\nyour password is %s\n" % (credentials['zid'], credentials['password']));
@@ -220,8 +220,14 @@ def profile_page(stuid):
 		return redirect('login/');
 
 	profile = query_db("SELECT * FROM users WHERE zid = ?", [stuid], one=True);
-	profile['profile'] = profile['profile'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;');
-	profile['profile'] = innocenttag.sub('<\g<1>>', profile['profile']);
+	if profile['profile']:
+		profile['profile'] = profile['profile'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;');
+		profile['profile'] = innocenttag.sub('<\g<1>>', profile['profile']);
+
+	ismate = False;
+	if 'login' in session:
+		ismate = query_db("""SELECT id FROM users WHERE mate1 = ? AND mate2 = ?""", 
+				[session['login'], stuid], one=True);
 
 	mates = query_db("""SELECT users.zid, users.dp, users.name FROM users JOIN mates 
 			ON users.zid = mates.mate2 WHERE mates.mate1= ?""", [stuid]);
@@ -234,7 +240,9 @@ def profile_page(stuid):
 	get_comments(posts);
 
 	if not profile is None:
-		return get_template("profile.html", level="..", profile=profile, mates=mates, posts=posts);
+		return get_template("profile.html", level="..", 
+				profile=profile, mates=mates, posts=posts, ismate = ismate);
+
 	return redirect(".");
 
 @app.route('/eprofile/', methods=['GET', 'POST'])
