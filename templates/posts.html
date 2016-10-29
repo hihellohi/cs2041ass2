@@ -22,6 +22,12 @@
 				<div class="pull-right">
 					{{post['date']}} {{post['time']}}
 				</div>
+				{% if login == post['zid'] %}
+				<form action="" method="POST" class="pull-right">
+					<button type="submit" name="delete" value="{{post['id']}}" class="btn btn-link btn-xs">Delete</button>
+					<input type="hidden" name="level" value={{loop.depth}}>
+				</form>
+				{% endif %}
 			</div>
 
 			<p style="white-space: pre-wrap;">{{post['message']}}</p>

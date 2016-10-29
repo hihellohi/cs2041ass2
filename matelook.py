@@ -57,7 +57,7 @@ def get_comments(posts):
 
 		for comment in post['children']:
 			comment['children'] = query_db(
-			"""SELECT replies.zid, replies.message, replies.date, replies.time, users.name, users.dp
+			"""SELECT replies.id, replies.zid, replies.message, replies.date, replies.time, users.name, users.dp
 			FROM replies INNER JOIN users ON replies.zid = users.zid WHERE replies.parent = ?
 			ORDER BY replies.date, replies.time""", [comment['id']]);
 
@@ -70,6 +70,9 @@ def get_mentions(string):
 
 	return out;
 
+def delete_reply(replyid):
+	get_db().cursor().execute("DELETE FROM replies WHERE id = ?", (replyid));
+	get_db().commit();
 
 # inserts posts/comments/replies
 def insert_comments():
@@ -85,8 +88,25 @@ def insert_comments():
 	time = now.time().isoformat().split('.')[0];
 	query = 'INSERT INTO %s (zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)';
 	mentionsquery = "INSERT INTO mentions (zid, post) VALUES (?, ?)";
+	
+	if 'delete' in request.form:
+		if request.form['level'] == '3':
+			c.execute("DELETE FROM replies WHERE id = ?", [request.form['delete']]);
+		elif request.form['level'] == '2':
+			c.execute("DELETE FROM replies WHERE parent = ?", [request.form['delete']]);
+			c.execute("DELETE FROM comments WHERE id = ?", [request.form['delete']]);
+		else:
+			c.execute("""
+					DELETE FROM replies WHERE id IN(
+						SELECT replies.id FROM replies 
+							JOIN comments ON replies.parent = comments.id
+							WHERE comments.id = ?
+						)""", [request.form['delete']]);
+			c.execute("DELETE FROM comments WHERE parent = ?", [request.form['delete']]);
+			c.execute("DELETE FROM posts WHERE id = ?", [request.form['delete']]);
 
-	if 'newpost' in request.form:
+		
+	elif 'newpost' in request.form:
 		c.execute("INSERT INTO posts (zid, message, date, time) VALUES (?, ?, ?, ?)",
 				(session['login'], request.form['post'], date, time));
 
