@@ -123,9 +123,13 @@ def insert_comments():
 	return True;
 
 def send_email(subject, to, body):
-	user = "noreply@matelook.com";
+	#user = "noreply@matelook.com";
+	user = "noreplymatelook@gmail.com";
 
-	with smtplib.SMTP('smtp.cse.unsw.edu.au') as s:
+	with smtplib.SMTP('smtp.gmail.com', port = 587) as s:
+		s.ehlo();
+		s.starttls();
+		s.login(user, "correct horse battery staple");
 		s.sendmail(user, to, "From: %s\nTo: %s\nSubject: %s\n\n%s\n" % (user, ', '.join(to), subject, body));
 
 @app.errorhandler(404)
