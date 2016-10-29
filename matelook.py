@@ -349,9 +349,11 @@ def search():
 		return redirect('login/');
 
 	if 'search' in request.args:
+		page = max(0, int(request.args['page']));
 		if request.args['criteria'] == 'users':
 			results = query_db("SELECT zid, name, dp FROM users WHERE name LIKE ?", ['%' + request.args['terms'] + '%']);
-			return get_template("suser.html", level="..", terms=request.args['terms'], users=results);
+			return get_template("suser.html", level="..", terms=request.args['terms'], users=results[page:page+10], page=page, 
+					l = len(results));
 		else:
 			results = query_db(
 			"""SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
@@ -359,8 +361,11 @@ def search():
 			ORDER BY posts.date DESC, posts.time DESC""", ['%' + request.args['terms'] + '%']);
 
 			get_comments(results);
+			print(len(results));
+			print(page);
 
-			return get_template("spost.html", level="..", terms=request.args['terms'], posts=results);
+			return get_template("spost.html", level="..", terms=request.args['terms'], posts=results[page:page+10], page=page,
+					l = len(results));
 	else:
 		return get_template("srequest.html", level="..");
 

@@ -4,10 +4,6 @@
 Search Results
 {% endblock %}
 
-{% block terms %}
-value="{{terms}}"
-{% endblock %}
-
 {% block results %}
 <ul class="media-list">
 	{% for result in users %}
@@ -32,4 +28,8 @@ value="{{terms}}"
 	<hr>
 	{% endfor %}
 </ul>
+{% endblock %}
+
+{% block pagination %}
+<input type="hidden" value="users" name="criteria">
 {% endblock %}

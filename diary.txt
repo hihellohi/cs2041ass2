@@ -14,3 +14,4 @@
 25/10/16	14:00	18:00	recovery and profile editing
 25/10/16	19:00	20:00	innocent profile tags
 26/10/16	19:00	20:00	mate requests
+29/10/16	12:00	15:00	search pagination

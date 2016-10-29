@@ -4,10 +4,6 @@
 Search Results
 {% endblock %}
 
-{% block terms %}
-value="{{terms}}"
-{% endblock %}
-
 {% block criteria %}
 <option value="users" >Search Users</option>
 <option value="posts" selected>Search Posts</option>
@@ -15,4 +11,8 @@ value="{{terms}}"
 
 {% block results %}
 {% include "posts.html" %}
+{% endblock %}
+
+{% block pagination %}
+<input type="hidden" value="posts" name="criteria">
 {% endblock %}

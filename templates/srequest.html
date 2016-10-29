@@ -7,12 +7,13 @@ Search
 {% block body %}
 <div class="container">
     <form method="GET">
+		<input type="hidden" name="page" value="0">
 		<div class="panel panel-primary">
 			<div class="panel-heading"><h1 class="panel-title">Search</h1></div>
 			<div class="panel-body">
 				<div class="form-group row">
 					<div class="col-sm-6 col-sm-offset-1">
-						<input type="text" {%block terms%}{%endblock%} name="terms" placeholder="Search Terms" class="form-control">
+						<input type="text" value="{{terms}}" name="terms" placeholder="Search Terms" class="form-control">
 					</div>
 					<div class="col-sm-4">
 						<select type="text" name="criteria" class="form-control">
@@ -36,6 +37,20 @@ Search
 <div class="container">
 {% block results %}
 {% endblock %}
+<form method="GET" class="text-center">
+	<div class="btn-group">
+		<button class={%if not page %}"btn btn-default disabled" disabled{%else%}"btn btn-default" type="submit" name="page" value="{{page - 10}}"{%endif%}>
+			<span aria-hidden="true">&larr;</span> Previous
+		</button>
+		<button class={%if not page is defined or page + 10 >= l %}"btn btn-default disabled" disabled{%else%}"btn btn-default" type="submit" name="page" value="{{page + 10}}"{%endif%}>
+			Next <span aria-hidden="true">&rarr;</span>
+		</button>
+		<input type="hidden" value="{{terms}}" name="terms">
+		<input type="hidden" name="search">
+		{% block pagination %}
+		{% endblock %}
+	</div>
+</form>
 </div>
 
 {% endblock %}
