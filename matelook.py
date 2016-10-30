@@ -342,8 +342,8 @@ def eprof():
 	if not 'login' in session:
 		return redirect('login/');
 	if request.method == 'POST':
-		get_db().cursor().execute("UPDATE users SET profile = ?, name = ? WHERE zid = ?", 
-				[request.form['pt'], request.form['name'], session['login']]);
+		get_db().cursor().execute("UPDATE users SET profile = ?, name = ?, suburb = ?, program = ?, WHERE zid = ?", 
+				[request.form['pt'], request.form['name'], request.form['suburb'], request.form['program'], session['login']]);
 		get_db().commit();
 		return redirect('z' + str(session['login']));
 	return get_template("eprofile.html", level="..", profile=query_db("SELECT * FROM users WHERE zid = ?", [session['login']], one=True));

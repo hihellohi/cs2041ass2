@@ -14,6 +14,16 @@
 				</div>
 
 				<div class="form-group">
+					<label for="program">Program</label>
+					<input type="text" name="program" id="program" value="{% if profile['program'] %}{{profile['program']}}{% endif %}" placeholder="Program" class="form-control"> 
+				</div>
+
+				<div class="form-group">
+					<label for="suburb">Home Suburb</label>
+					<input type="text" name="suburb" id="suburb" value="{% if profile['suburb'] %}{{profile['suburb']}}{% endif %}" placeholder="Suburb" class="form-control"> 
+				</div>
+
+				<div class="form-group">
 					<label for="pt">Profile Text</label>
 					<textarea placeholder="Profile Text" name="pt" id="pt" class="form-control" rows=3>{% if profile['profile'] %}{{profile['profile']}}{% endif %}</textarea>
 				</div>
