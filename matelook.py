@@ -55,7 +55,7 @@ def get_tags(post):
 	for student in set(studentid.findall(post['message'])):
 		record = query_db("SELECT name FROM users where zid = ?", [student], one=True);
 		if record:
-			post['message'] = post['message'].replace('z' + student, '<a href="../z{0}">{1}</a>'.format(student, record['name'] if record['name'] else 'z' + student));
+			post['message'] = post['message'].replace('z' + student, '<a href="../z{0}">{1}</a>'.format(sanitize(student), sanitize(record['name'] if record['name'] else 'z' + student)));
 
 #get tags, comments and replies for a list of posts
 def get_comments(posts):
@@ -342,8 +342,8 @@ def eprof():
 	if not 'login' in session:
 		return redirect('login/');
 	if request.method == 'POST':
-		get_db().cursor().execute("UPDATE users SET profile = ?, name = ?, suburb = ?, program = ?, WHERE zid = ?", 
-				[request.form['pt'], request.form['name'], request.form['suburb'], request.form['program'], session['login']]);
+		get_db().cursor().execute("UPDATE users SET profile = ?, name = ?, suburb = ?, program = ?, birthday = ? WHERE zid = ?", 
+				[request.form['pt'], request.form['name'], request.form['suburb'], request.form['program'], request.form['bday'], session['login']]);
 		get_db().commit();
 		return redirect('z' + str(session['login']));
 	return get_template("eprofile.html", level="..", profile=query_db("SELECT * FROM users WHERE zid = ?", [session['login']], one=True));

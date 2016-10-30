@@ -4,7 +4,7 @@
 
 {% block body %}
 <div class="container">
-	<form method="POST" action="">
+	<form method="POST" action="" enctype="multipart/form-data">
 		<div class="panel panel-primary">
 			<div class="panel-heading"><h1 class="panel-title">Edit Profile</h1></div>
 			<div class="panel-body">
@@ -22,6 +22,17 @@
 					<label for="suburb">Home Suburb</label>
 					<input type="text" name="suburb" id="suburb" value="{% if profile['suburb'] %}{{profile['suburb']}}{% endif %}" placeholder="Suburb" class="form-control"> 
 				</div>
+
+				<div class="form-group">
+					<label for="bday">Birthday</label>
+					<input type="date" name="bday" id="bday" value="{% if profile['birthday'] %}{{profile['birthday']}}{% endif %}" class="form-control"> 
+				</div>
+
+				<label class="custom-file">
+					Profile Picture
+					<input type="file" id="file" class="custom-file-input">
+					<span class="custom-file-control"></span>
+				</label>
 
 				<div class="form-group">
 					<label for="pt">Profile Text</label>
