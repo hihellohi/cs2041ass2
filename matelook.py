@@ -343,6 +343,16 @@ def new_mate(mateid):
 
 	return get_template("newmate.html", level="..", profile=profile);
 
+def remove_picture(cursor, zid):
+	existing = query_db("SELECT dp FROM users WHERE zid = ?", [zid], one=True)['dp'];
+	if existing:
+		existing = existing.lstrip('/');
+		if(os.path.exists(existing)):
+			os.remove(existing);
+
+	cursor.execute("UPDATE users SET dp = NULL WHERE zid = ?", [zid]);
+	
+
 @app.route('/eprofile/', methods=['GET', 'POST'])
 def eprof():
 	if not 'login' in session:
@@ -352,14 +362,13 @@ def eprof():
 		cursor.execute("UPDATE users SET profile = ?, name = ?, suburb = ?, program = ?, birthday = ? WHERE zid = ?", 
 				[request.form['pt'], request.form['name'], request.form['suburb'], request.form['program'], request.form['bday'], session['login']]);
 
+		if "remove" in request.form:
+			remove_picture(cursor, session['login']);
+
 		f = request.files['file'];
 		if f and f.filename and allowed_file(f.filename):
 
-			existing = query_db("SELECT dp FROM users WHERE zid = ?", [session['login']], one=True)['dp'];
-			if existing:
-				existing = existing.lstrip('/');
-				if(os.path.exists(existing)):
-					os.remove(existing);
+			remove_picture(cursor, session['login']);
 
 			dp = '/'.join([app.config['UPLOAD_FOLDER'], session['login'] + '.' + f.filename.rsplit('.', 1)[1]]);
 			f.save(dp);
