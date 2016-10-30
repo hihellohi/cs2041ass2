@@ -16,3 +16,4 @@
 26/10/16	19:00	20:00	mate requests
 29/10/16	12:00	15:00	search pagination
 30/10/16	12:00	15:00	fixed tagging and final polishes
+30/10/16	18:00	22:00	profile pictures

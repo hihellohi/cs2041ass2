@@ -7,8 +7,11 @@ import datetime;
 import smtplib
 from email.mime.text import MIMEText;
 
+allowed_extensions = ['jpg', 'jpeg', 'png', 'bmp', 'gif'];
+
 app = Flask(__name__);
 app.secret_key = "thisistext";
+app.config['UPLOAD_FOLDER'] = 'static/pics';
 
 database = "dataset.db";
 
@@ -17,6 +20,9 @@ innocenttag = re.compile(r'&lt;(/?[bui])&gt;');
 
 #src: http://flask.pocoo.org/docs/0.11/patterns/sqlite3/
 #sqlite code
+def allowed_file(filename):
+	return '.' in filename and filename.rsplit('.', 1)[1] in allowed_extensions;
+
 def make_dicts(cursor, row):
     return dict((cursor.description[idx][0], value)
                 for idx, value in enumerate(row))
@@ -342,8 +348,23 @@ def eprof():
 	if not 'login' in session:
 		return redirect('login/');
 	if request.method == 'POST':
-		get_db().cursor().execute("UPDATE users SET profile = ?, name = ?, suburb = ?, program = ?, birthday = ? WHERE zid = ?", 
+		cursor = get_db().cursor();
+		cursor.execute("UPDATE users SET profile = ?, name = ?, suburb = ?, program = ?, birthday = ? WHERE zid = ?", 
 				[request.form['pt'], request.form['name'], request.form['suburb'], request.form['program'], request.form['bday'], session['login']]);
+
+		f = request.files['file'];
+		if f and f.filename and allowed_file(f.filename):
+
+			existing = query_db("SELECT dp FROM users WHERE zid = ?", [session['login']], one=True)['dp'];
+			if existing:
+				existing = existing.lstrip('/');
+				if(os.path.exists(existing)):
+					os.remove(existing);
+
+			dp = '/'.join([app.config['UPLOAD_FOLDER'], session['login'] + '.' + f.filename.rsplit('.', 1)[1]]);
+			f.save(dp);
+			cursor.execute("UPDATE users SET dp = ? WHERE zid = ?", ['/' + dp, session['login']]);
+			
 		get_db().commit();
 		return redirect('z' + str(session['login']));
 	return get_template("eprofile.html", level="..", profile=query_db("SELECT * FROM users WHERE zid = ?", [session['login']], one=True));
