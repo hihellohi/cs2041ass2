@@ -131,7 +131,7 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 
 			date, time = fields['time'].split('T');
 			time = time.split('+')[0];
-			message = fields["message"].replace('\\n','\n');
+			message = fields.get("message", "").replace('\\n','\n');
 
 			cursor.execute('''INSERT INTO posts
 			(longitude, latitude, zid, message, date, time) VALUES (?, ?, ?, ?, ?, ?)''',
@@ -158,7 +158,7 @@ for path in glob.glob(os.path.join(sys.argv[2], "*")):
 
 					date, time = fields['time'].split('T');
 					time = time.split('+')[0];
-					message = fields["message"].replace('\\n','\n');
+					message = fields.get("message", "").replace('\\n','\n');
 
 					cursor.execute('''INSERT INTO comments
 					(zid, parent, message, date, time) VALUES (?, ?, ?, ?, ?)''',

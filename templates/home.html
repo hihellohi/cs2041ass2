@@ -14,5 +14,16 @@
 	<br>
 
 	{% include "posts.html" %}
+
+	<form method="GET" class="text-center">
+		<div class="btn-group">
+			<button class={%if not page %}"btn btn-default disabled" disabled{%else%}"btn btn-default" type="submit" name="page" value="{{page - 10}}"{%endif%}>
+				<span aria-hidden="true">&larr;</span> Previous
+			</button>
+			<button class={%if not page is defined or page + 10 >= l %}"btn btn-default disabled" disabled{%else%}"btn btn-default" type="submit" name="page" value="{{page + 10}}"{%endif%}>
+				Next <span aria-hidden="true">&rarr;</span>
+			</button>
+		</div>
+	</form>
 </div>
 {% endblock %}

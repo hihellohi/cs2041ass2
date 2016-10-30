@@ -42,29 +42,46 @@ def close_connection(exception):
 		db.close();
 #endsrc
 
+def sanitize(string):
+	return string.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;');
+
 #wrapper for render_template, pass login cookie
 def get_template(f, **args):
 	args['login'] = int(session['login']) if 'login' in session else None;
 	return render_template(f, **args);
 
-#get comments and replies for a list of posts
+def get_tags(post):
+	post['message'] = sanitize(post['message']);
+	for student in set(studentid.findall(post['message'])):
+		record = query_db("SELECT name FROM users where zid = ?", [student], one=True);
+		if record:
+			post['message'] = post['message'].replace('z' + student, '<a href="../z{0}">{1}</a>'.format(student, record['name'] if record['name'] else 'z' + student));
+
+#get tags, comments and replies for a list of posts
 def get_comments(posts):
 	for post in posts:
+		get_tags(post);
 		post['children'] = query_db(
 		"""SELECT comments.id, comments.zid, comments.message, comments.date, comments.time, users.name, users.dp
 		FROM comments INNER JOIN users ON comments.zid = users.zid WHERE comments.parent = ?
 		ORDER BY comments.date, comments.time""", [post['id']]);
 
 		for comment in post['children']:
+			get_tags(comment);
 			comment['children'] = query_db(
 			"""SELECT replies.id, replies.zid, replies.message, replies.date, replies.time, users.name, users.dp
 			FROM replies INNER JOIN users ON replies.zid = users.zid WHERE replies.parent = ?
 			ORDER BY replies.date, replies.time""", [comment['id']]);
 
+			for reply in comment['children']:
+				get_tags(reply);
+
 #get all mantions in a string
 def get_mentions(string):
 	out = [];
+	print("im here");
 	for i in set(studentid.findall(string)):
+		print (i);
 		if query_db("SELECT * FROM users WHERE zid = ?", [i]):
 			out.append(i);
 
@@ -289,7 +306,7 @@ def profile_page(stuid):
 	get_comments(posts);
 
 	if profile['profile']:
-		profile['profile'] = profile['profile'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;');
+		profile['profile'] = sanitize(profile['profile']);
 		profile['profile'] = innocenttag.sub('<\g<1>>', profile['profile']);
 
 	return get_template("profile.html", level="..", 
@@ -339,6 +356,11 @@ def newsfeed():
 	if not insert_comments():
 		return redirect('login/');
 
+	if not 'page' in request.args:
+		page = 0;
+	else:
+		page = int(request.args['page']);
+
 	posts = query_db(
 	"""
 	SELECT T.id, T.zid, T.message, T.date, T.time, T.name, T.dp FROM(
@@ -358,9 +380,12 @@ def newsfeed():
 			WHERE mentions.zid = ?
 	) AS T
 	ORDER BY date DESC, time DESC""", [session['login']] * 3);
+
+	lenr = len(posts);
+	posts = posts[page:page+10];
 	
 	get_comments(posts);
-	return get_template("home.html", level="..", posts=posts);
+	return get_template("home.html", level="..", posts=posts, page=page, l=lenr);
 
 @app.route('/search/', methods=['GET', 'POST'])
 def search():
@@ -379,13 +404,12 @@ def search():
 			"""SELECT posts.id, posts.zid, posts.message, posts.date, posts.time, users.name, users.dp 
 			FROM posts JOIN users ON posts.zid = users.zid WHERE posts.message LIKE ? 
 			ORDER BY posts.date DESC, posts.time DESC""", ['%' + request.args['terms'] + '%']);
+			lenr = len(results);
+			results = results[page:page+10];
 
 			get_comments(results);
-			print(len(results));
-			print(page);
 
-			return get_template("spost.html", level="..", terms=request.args['terms'], posts=results[page:page+10], page=page,
-					l = len(results));
+			return get_template("spost.html", level="..", terms=request.args['terms'], posts=results, page=page, l = lenr);
 	else:
 		return get_template("srequest.html", level="..");
 
